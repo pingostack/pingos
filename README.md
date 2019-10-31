@@ -1,6 +1,6 @@
 
 
-# Ping Open Source Media Streaming Server
+# PingOS
 
 ## 项目网站
 
