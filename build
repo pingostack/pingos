@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+MAKE=1
+CLEAN=0
+INSTALL=0
+REBUILD=0
+INSTALL_PATH="/usr/local/"
+SERVICENAME="pingos"
+
+while getopts 'mcirp:s:' OPT; do
+    case $OPT in
+        m)
+            MAKE=1
+            ;;
+        c)
+            CLEAN=1
+            ;;
+        i)
+            INSTALL=1
+            ;;
+        r)
+            REBUILD=1
+            ;;
+        p)
+            INSTALL_PATH=$OPTARG
+            ;;
+        s)
+            SERVICENAME=$OPTARG
+            ;;
+        ?)
+            echo "Usage: `basename $0` [-m make] [-i install] [-c clean] [-p install path] [-s service name] [-r rebuild]"
+            exit 1
+    esac
+done
+
+scanOS(){
+    OS=`uname -s`
+    if [ ${OS} == "Darwin" ]
+    then
+        echo "brew"
+    elif [ ${OS} == "Linux" ]
+    then
+        source /etc/os-release
+        case $ID in
+            debian|ubuntu|devuan)
+                echo "apt-get"
+                ;;
+            centos|fedora|rhel)
+                echo return "yum"
+                ;;
+            *)
+                exit 1
+                ;;
+        esac
+    else
+        echo ${OS}
+    fi
+}
+
+modules=(
+    "--add-module=../modules/nginx-rtmp-module"
+    "--add-module=../modules/nginx-client-module"
+    "--add-module=../modules/nginx-multiport-module"
+    "--add-module=../modules/nginx-toolkit-module"
+)
+
+options=( "--prefix=$INSTALL_PATH$SERVICENAME" )
+
+if [ $CLEAN == 1 ]
+then
+    if [ -d nginx ]
+    then
+        cd nginx
+        echo "cleanup ..."
+        make clean
+        cd ..
+    fi
+    exit 1
+fi
+
+if [ $REBUILD == 1 ]
+then
+    if [ -d nginx ]
+    then
+        cd nginx
+        if [ -e Makefile ]
+        then
+            make clean
+        fi
+        cd ..
+    fi
+fi
+
+CMD=`scanOS`
+
+# depend
+if [ "$CMD" == "yum" ]
+then
+    yum install -y git gcc gcc-c++ openssl openssl-devel pcre-devel
+
+elif [ "$CMD" == "apt-get" ]
+then
+    apt-get install -y build-essential
+    apt-get install -y libtool
+    apt-get update
+    apt-get install -y libpcre3 libpcre3-dev
+    apt-get install -y zlib1g-dev
+    apt-get install -y openssl
+
+elif [ "$CMD" == "brew" ]
+then
+#    brew install -y openssl
+    options[${#options[*]}]='--with-ld-opt="-L/usr/local/opt/openssl/lib/ -L/usr/local/opt/pcre/lib/"'
+    options[${#options[*]}]='--with-cc-opt="-I/usr/local/opt/openssl/include/ -I/usr/local/opt/pcre/include/"'
+
+else
+    echo "$CMD not supported"
+    exit 1
+fi
+
+if [ ! -d "./nginx" ]
+then
+    wget https://nginx.org/download/nginx-1.17.5.tar.gz
+    tar zxvf nginx-1.17.5.tar.gz
+    mv nginx-1.17.5 nginx
+    rm -f nginx-1.17.5.tar.gz
+fi
+
+cd nginx
+
+if [ ! -f "Makefile" ]
+then
+    config="./configure"
+    for option in ${options[*]}
+    do
+        config=$config" "$option
+    done
+
+    for module in ${modules[*]}
+    do
+        config=$config" "$module
+    done
+
+    echo $config
+
+    bash -c "$config"
+
+fi
+
+if [ -f "Makefile" ]
+then
+    if [ $MAKE == 1 ] || [ $REBUILD == 1 ] || [ $INSTALL == 1 ]
+    then
+        make -j4
+    fi
+
+    if [ $INSTALL ]
+    then
+        make install
+    fi
+fi
+
+cd ..
