@@ -45,7 +45,7 @@ scanOS(){
                 echo "apt-get"
                 ;;
             centos|fedora|rhel)
-                echo return "yum"
+                echo "yum"
                 ;;
             *)
                 exit 1
