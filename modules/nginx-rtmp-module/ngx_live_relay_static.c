@@ -10,7 +10,7 @@
 #include "ngx_map.h"
 #include "ngx_dynamic_conf.h"
 #include "ngx_rtmp_dynamic.h"
-
+#include "ngx_dynamic_resolver.h"
 
 static ngx_live_pull_pt                 next_pull;
 
@@ -545,6 +545,8 @@ ngx_live_relay_pull(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             if (url->port == 0) {
                 return "invalid port";
             }
+
+            ngx_dynamic_resolver_add_domain(&url->url.host, cf->cycle);
 
             continue;
         }

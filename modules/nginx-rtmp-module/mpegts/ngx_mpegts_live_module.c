@@ -1280,6 +1280,9 @@ ngx_mpegts_live_h264_handler(ngx_rtmp_session_t *s, ngx_rtmp_frame_t *f)
                         ngx_log_error(NGX_LOG_ERR, s->log, 0,
                             "mpegts-mux: h264_handler| error appending AUD NAL");
                     }
+                    aud_sent = 1;
+                    break;
+
                 case 9:
                     aud_sent = 1;
                     break;

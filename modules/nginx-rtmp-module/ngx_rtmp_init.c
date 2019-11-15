@@ -125,6 +125,22 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
         case AF_UNIX:
             unix_socket = 1;
 
+            sin = (struct sockaddr_in *) sa;
+
+            addr = port->addrs;
+
+            /* the last address is "*" */
+
+            for (i = 0; i < port->naddrs - 1; i++) {
+                if (addr[i].addr == sin->sin_addr.s_addr) {
+                    break;
+                }
+            }
+
+            addr_conf = &addr[i].conf;
+
+            break;
+
         default: /* AF_INET */
             sin = (struct sockaddr_in *) sa;
 
@@ -155,6 +171,9 @@ ngx_rtmp_init_connection(ngx_connection_t *c)
 
         case AF_UNIX:
             unix_socket = 1;
+            addr = port->addrs;
+            addr_conf = &addr[0].conf;
+            break;
 
         default: /* AF_INET */
             addr = port->addrs;

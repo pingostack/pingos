@@ -410,6 +410,17 @@ ngx_rtmp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             break;
         }
 
+        rule = ngx_array_push(&ascf->rules);
+        if (rule == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        rule->mask = cidr.u.in.mask;
+        rule->addr = cidr.u.in.addr;
+        rule->deny = (value[0].data[0] == 'd') ? 1 : 0;
+        rule->flags = flags;
+
+        break;
         /* "all" passes through */
 #endif
 

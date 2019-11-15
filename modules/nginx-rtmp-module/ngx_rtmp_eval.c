@@ -154,6 +154,19 @@ ngx_rtmp_eval(void *ctx, ngx_str_t *in, ngx_rtmp_eval_t **e, ngx_str_t *out,
 
                 name.len = p - name.data;
                 ngx_rtmp_eval_append_var(ctx, &b, e, &name, log);
+                switch (c) {
+                    case '$':
+                        name.data = p + 1;
+                        state = NAME;
+                        continue;
+                    case '\\':
+                        state = ESCAPE;
+                        continue;
+                }
+
+                ngx_rtmp_eval_append(&b, &c, 1, log);
+                state = NORMAL;
+                break;
 
             case NORMAL:
                 switch (c) {
@@ -165,6 +178,9 @@ ngx_rtmp_eval(void *ctx, ngx_str_t *in, ngx_rtmp_eval_t **e, ngx_str_t *out,
                         state = ESCAPE;
                         continue;
                 }
+                ngx_rtmp_eval_append(&b, &c, 1, log);
+                state = NORMAL;
+                break;
 
             case ESCAPE:
                 ngx_rtmp_eval_append(&b, &c, 1, log);

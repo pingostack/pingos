@@ -2144,6 +2144,9 @@ ngx_rtmp_hls_video(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                             ngx_log_error(NGX_LOG_ERR, s->log, 0,
                                         "hls: error appending AUD NAL");
                         }
+                        aud_sent = 1;
+                        break;
+
                     case 9:
                         aud_sent = 1;
                         break;

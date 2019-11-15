@@ -49,10 +49,7 @@ git clone https://github.com/im-pingo/pingos.git
 
 cd pingos
 
-./build -i
-
-# copy 配置模板
-cp conf/nginx.conf /usr/local/pingos/conf/
+./release.sh -i
 
 # 启动服务
 cd /usr/local/pingos/
