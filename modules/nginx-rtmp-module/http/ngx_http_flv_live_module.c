@@ -20,7 +20,9 @@ static void *ngx_http_flv_live_create_loc_conf(ngx_conf_t *cf);
 static char *ngx_http_flv_live_merge_loc_conf(ngx_conf_t *cf, void *parent,
        void *child);
 
-static u_char  ngx_flv_live_header[] = "FLV\x1\x5\0\0\0\x9\0\0\0\0";
+static u_char  ngx_flv_live_audio_header[] = "FLV\x1\x1\0\0\0\x9\0\0\0\0";
+static u_char  ngx_flv_live_video_header[] = "FLV\x1\x4\0\0\0\x9\0\0\0\0";
+static u_char  ngx_flv_live_av_header[] = "FLV\x1\x5\0\0\0\x9\0\0\0\0";
 
 static ngx_keyval_t ngx_http_flv_live_headers[] = {
     { ngx_string("Cache-Control"),  ngx_string("no-cache") },
@@ -41,6 +43,8 @@ typedef struct {
     ngx_str_t                   swf_url;
     ngx_str_t                   tc_url;
     ngx_str_t                   page_url;
+    ngx_uint_t                  audio;
+    ngx_uint_t                  video;
 
     ngx_rtmp_addr_conf_t       *addr_conf;
 } ngx_http_flv_live_loc_conf_t;
@@ -49,7 +53,7 @@ typedef struct {
 static ngx_command_t  ngx_http_flv_live_commands[] = {
 
     { ngx_string("flv_live"),
-      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE12,
+      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE123,
       ngx_http_flv_live,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
@@ -97,10 +101,13 @@ ngx_http_flv_live_send_header(ngx_http_request_t *r)
     ngx_keyval_t                       *h;
     ngx_buf_t                          *b;
     ngx_chain_t                         out;
+    ngx_http_flv_live_loc_conf_t       *hflcf;
 
     if (r->header_sent) {
         return NGX_OK;
     }
+
+    hflcf = ngx_http_get_module_loc_conf(r, ngx_http_flv_live_module);
 
     r->headers_out.status = NGX_HTTP_OK;
     r->keepalive = 0; /* set Connection to closed */
@@ -124,8 +131,32 @@ ngx_http_flv_live_send_header(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    b->start = b->pos = ngx_flv_live_header;
-    b->end = b->last = ngx_flv_live_header + sizeof(ngx_flv_live_header) - 1;
+    switch (hflcf->audio | (hflcf->video < 1)) {
+        case 1: // audio only
+            b->start = b->pos = ngx_flv_live_audio_header;
+            b->end = b->last = ngx_flv_live_audio_header +
+                sizeof(ngx_flv_live_audio_header) - 1;
+        break;
+
+        case 2: // video only
+            b->start = b->pos = ngx_flv_live_video_header;
+            b->end = b->last = ngx_flv_live_video_header +
+                sizeof(ngx_flv_live_video_header) - 1;
+        break;
+
+        case 3: // audio and video
+            b->start = b->pos = ngx_flv_live_av_header;
+            b->end = b->last = ngx_flv_live_av_header +
+                sizeof(ngx_flv_live_av_header) - 1;
+        break;
+
+        default:
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "flv-live: send_header| av header config error.");
+
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
     b->memory = 1;
 
     out.buf = b;
@@ -631,6 +662,7 @@ ngx_http_flv_live(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_flv_live_loc_conf_t       *hflcf;
     ngx_str_t                          *value, v;
     ngx_uint_t                          i;
+    ngx_uint_t                          audio, video;
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
     clcf->handler = ngx_http_flv_live_handler;
@@ -644,15 +676,37 @@ ngx_http_flv_live(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    audio = NGX_CONF_UNSET_UINT;
+    video = NGX_CONF_UNSET_UINT;
+
     for (i = 2; i < cf->args->nelts; ++i) {
         if (ngx_strncmp(value[i].data, "app=", 4) == 0) {
             v.data = value[i].data + 4;
             v.len = value[i].len - 4;
             hflcf->app = v;
+        } else if (ngx_strncmp(value[i].data, "audio=", 6) == 0) {
+            v.data = value[i].data + 6;
+            v.len = value[i].len - 6;
+            audio = ngx_atoi(v.data, v.len);
+        } else if (ngx_strncmp(value[i].data, "video=", 6) == 0) {
+            v.data = value[i].data + 6;
+            v.len = value[i].len - 6;
+            video = ngx_atoi(v.data, v.len);
         } else {
             return NGX_CONF_ERROR;
         }
     }
+
+    if (audio == NGX_CONF_UNSET_UINT) {
+        audio = 1;
+    }
+
+    if (video == NGX_CONF_UNSET_UINT) {
+        video = 1;
+    }
+
+    hflcf->audio = audio;
+    hflcf->video = video;
 
     return NGX_CONF_OK;
 }
