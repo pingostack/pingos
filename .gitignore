@@ -1,4 +1,4 @@
 nginx/
 openresty/
 .git/
-pingos.code-workspace
+*.code-workspace
