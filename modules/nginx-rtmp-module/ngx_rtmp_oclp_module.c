@@ -463,6 +463,11 @@ ngx_rtmp_oclp_create_event(ngx_conf_t *cf, ngx_rtmp_oclp_event_t *event,
 
         event->url.len = values[i].len;
         event->url.data = values[i].data;
+        if (values[i].data[values[i].len - 1] != '/') {
+            event->url.data = ngx_pcalloc(cf->pool, values[i].len + 1);
+            event->url.len = values[i].len + 1;
+            ngx_snprintf(event->url.data, event->url.len, "%V/", &values[i]);
+        }
 
         if (ngx_parse_request_url(&ru, &event->url) != NGX_OK) {
             ngx_conf_log_error(NGX_LOG_WARN, cf, 0, "request url format error");
@@ -738,13 +743,17 @@ ngx_rtmp_oclp_common_url(ngx_str_t *url, ngx_rtmp_session_t *s,
     buf = p;
 
     if (ru.args.len) { // url already has args
-        p = ngx_snprintf(buf, len, "&call=%s&act=%s&domain=%V&app=%V&name=%V",
+        p = ngx_snprintf(buf, len,
+                "&call=%s&act=%s&domain=%V&app=%V&name=%V&clientid=%D",
                 ngx_rtmp_oclp_app_type[nctx->type],
-                ngx_rtmp_oclp_stage[stage], &s->domain, &s->app, &s->name);
+                ngx_rtmp_oclp_stage[stage],
+                &s->domain, &s->app, &s->name, s->number);
     } else {
-        p = ngx_snprintf(buf, len, "?call=%s&act=%s&domain=%V&app=%V&name=%V",
+        p = ngx_snprintf(buf, len,
+                "?call=%s&act=%s&domain=%V&app=%V&name=%V&clientid=%D",
                 ngx_rtmp_oclp_app_type[nctx->type],
-                ngx_rtmp_oclp_stage[stage], &s->domain, &s->app, &s->name);
+                ngx_rtmp_oclp_stage[stage],
+                &s->domain, &s->app, &s->name, s->number);
     }
     len -= p - buf;
     buf = p;

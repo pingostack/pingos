@@ -730,6 +730,10 @@ ngx_client_connect_server(void *data, struct sockaddr *sa, socklen_t socklen)
         ngx_log_error(NGX_LOG_ERR, &s->log, ngx_errno,
                 "nginx client connect peer failed");
         goto failed;
+    } else if (rc == NGX_DECLINED) {
+        ngx_log_error(NGX_LOG_ERR, &s->log, ngx_errno,
+                "nginx client connect peer failed");
+        goto failed;
     }
 
     if (rc == NGX_DONE) {
