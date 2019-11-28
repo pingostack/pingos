@@ -738,13 +738,17 @@ ngx_rtmp_oclp_common_url(ngx_str_t *url, ngx_rtmp_session_t *s,
     buf = p;
 
     if (ru.args.len) { // url already has args
-        p = ngx_snprintf(buf, len, "&call=%s&act=%s&domain=%V&app=%V&name=%V",
+        p = ngx_snprintf(buf, len,
+                "&call=%s&act=%s&domain=%V&app=%V&name=%V&clientid=%D",
                 ngx_rtmp_oclp_app_type[nctx->type],
-                ngx_rtmp_oclp_stage[stage], &s->domain, &s->app, &s->name);
+                ngx_rtmp_oclp_stage[stage],
+                &s->domain, &s->app, &s->name, s->number);
     } else {
-        p = ngx_snprintf(buf, len, "?call=%s&act=%s&domain=%V&app=%V&name=%V",
+        p = ngx_snprintf(buf, len,
+                "?call=%s&act=%s&domain=%V&app=%V&name=%V&clientid=%D",
                 ngx_rtmp_oclp_app_type[nctx->type],
-                ngx_rtmp_oclp_stage[stage], &s->domain, &s->app, &s->name);
+                ngx_rtmp_oclp_stage[stage],
+                &s->domain, &s->app, &s->name, s->number);
     }
     len -= p - buf;
     buf = p;
