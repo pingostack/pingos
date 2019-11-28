@@ -392,6 +392,7 @@ ngx_rtmp_finalize_session(ngx_rtmp_session_t *s)
 
     if (s->live_type == NGX_HLS_LIVE) {
         ngx_rtmp_finalize_fake_session(s);
+        return;
     }
 
     if (s->destroyed) {

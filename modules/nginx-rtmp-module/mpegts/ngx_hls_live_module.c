@@ -246,6 +246,11 @@ ngx_hls_live_write_playlist(ngx_rtmp_session_t *s, ngx_buf_t *out,
     ngx_hls_live_app_conf_t   *hacf;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_hls_live_module);
+    if (ctx == NULL) {
+        ngx_log_error(NGX_LOG_ERR, s->log, 0, "hls-live: playlist| ctx is null");
+
+        return NGX_ERROR;
+    }
 
     ctx->last_time = time(NULL);
 
@@ -786,6 +791,10 @@ ngx_hls_live_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
 
     if (ctx->ev.timer_set) {
         ngx_del_timer(&ctx->ev);
+    }
+
+    if (ctx->stream == NULL) {
+        goto next;
     }
 
     ngx_rtmp_fire_event(s, NGX_MPEGTS_MSG_CLOSE, NULL, NULL);
