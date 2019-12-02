@@ -181,7 +181,7 @@ then
 
     elif [ "$CMD" == "brew" ]
     then
-        brew install -y openssl pcre
+        brew install openssl pcre
         options[${#options[*]}]='--with-ld-opt="-L/usr/local/opt/openssl/lib/ -L/usr/local/opt/pcre/lib/"'
         options[${#options[*]}]='--with-cc-opt="-I/usr/local/opt/openssl/include/ -I/usr/local/opt/pcre/include/"'
 

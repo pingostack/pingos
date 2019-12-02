@@ -301,11 +301,11 @@ ngx_rtmp_close_session(ngx_rtmp_session_t *s)
 
     ngx_rtmp_free_merge_frame(s);
 
-    if (s->live_type == NGX_HLS_LIVE || s->live_type == NGX_MPEGTS_LIVE) {
-//        while (s->out_pos != s->out_last) {
-//            ngx_rtmp_shared_free_mpegts_frame(s->mpegts_out[s->out_pos++]);
-//            s->out_pos %= s->out_queue;
-//        }
+    if (s->live_type == NGX_MPEGTS_LIVE) {
+        while (s->out_pos != s->out_last) {
+            ngx_rtmp_shared_free_mpegts_frame(s->mpegts_out[s->out_pos++]);
+            s->out_pos %= s->out_queue;
+        }
     } else {
         while (s->out_pos != s->out_last) {
             ngx_rtmp_shared_free_frame(s->out[s->out_pos++]);
