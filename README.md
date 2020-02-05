@@ -184,6 +184,68 @@ ffmpeg -re -i your-input-file -vcodec libx264 -acodec aac -f flv rtmp://your-ser
 ![rtmp-stat](https://img-blog.csdnimg.cn/20190811012138191.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ltcGluZ28=,size_16,color_FFFFFF,t_70)
 
 ----
+# 变量
+
+在nginx.conf配置里可以使用变量配置，配置方式是“$”后跟变量名，如：
+```nginx
+oclp_play http://127.0.0.1:8080 stage=start args=$pargs;
+```
+
+>这条配置中“$pargs”就是变量，含义是rtmp或http连接附加的自定义参数，例如：
+>
+>rtmp://xxx.xxx.xxx.xxx/app/name?k0=0&k1=1
+>$pargs会被替换成“k0=0&k1=1”
+
+变量名 | 含义
+---|---
+domain | 客户端服务器时使用的域名，类似http协议中的host参数
+app | 挂载点名
+name | 流名
+stream | 流标识，serverid/app/name拼接而成
+pargs | 推流或播放请求连接后携带的自定义参数
+args | rtmp协议中，在connection阶段携带的参数
+flashver | rtmp协议中的flashver
+swf_url | rtmp协议中的swf_url
+tc_url | rtmp协议中的tc_url
+page_url | rtmp协议中的page_url
+acodecs | 音频编码类型
+vcodecs | 视频编码类型
+scheme | 连接使用的协议，如http、rtmp
+serverid | 配置中的serverid
+oclp_status | oclp执行结果
+finalize_reason | session被销毁的原因
+stage | 当前session所处的阶段:<br/>"init", "handshake_done", "connect", "create_stream", "publish", "play", "audio_video", "close_stream"
+init | session被初始化的时间
+handshake_done | rtmp握手完成时的时间
+connect | 连接建立的时间
+create_stream | 流被创建时的时间
+ptime | 从推流端获取到第一帧媒体数据时的时间
+first_data | 收到或发送第一帧媒体数据的时间
+first_metadata | 收到或发送metadata的时间
+first_audio | 收到或发送第一个音频帧的时间
+first_video | 收到或发送第一个视频帧的时间
+close_stream | 流被关闭的时间
+relay_domain | relay操作使用的域名，参考domain变量
+relay_app | relay操作使用的挂载点名，参考app变量
+relay_name | relay操作使用的流名，参考name变量
+relay_args | relay操作connection的参数，参考args变量
+relay_pargs | relay操作的pages参数，参考pargs变量
+relay_referer | relay操作的referer，参考page_url变量
+relay_user_agent | relay操作中User-Agent参数
+relay_swf_url | 参考swf_url
+relay_acodecs | relay操作成功后，拉取到的或推送出去的音频编码类型，参考acodecs
+relay_vcodecs | relay操作成功后，拉取到的或推送出去的视频编码类型，参考vcodecs
+remote_addr | 客户端IP
+remote_port | 客户端端口
+server_addr | 客户端通过服务器的哪个IP连接进来的
+server_port | 客户端通过服务器的哪个端口连接进来的
+nginx_version | nginx版本
+pid | nginx worker进程的进程号
+msec | 精确到微妙的时间戳，标记当前操作的精确时间
+time_iso8601 | iso8601标准时间
+time_local | 格式化的时间
+ngx_worker | worker进程的编号
+parg_ | 获取到pargs参数中的某个参数，例如pargs为k0=0&k1=1，那么$parg_k0就是0，$parg_k1就是1
 
 # 全局配置
  
