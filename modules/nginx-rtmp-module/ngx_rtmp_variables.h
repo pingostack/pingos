@@ -73,6 +73,10 @@ void *ngx_rtmp_map_find(ngx_rtmp_session_t *s, ngx_rtmp_map_t *map,
 ngx_int_t ngx_rtmp_variables_add_core_vars(ngx_conf_t *cf);
 ngx_int_t ngx_rtmp_variables_init_vars(ngx_conf_t *cf);
 
+ngx_int_t ngx_rtmp_variable_transform_index(ngx_conf_t *cf,
+    ngx_str_t *origin, ngx_str_t *target);
+ngx_int_t ngx_rtmp_fetch_variable(ngx_rtmp_session_t *s, ngx_pool_t *pool,
+                          ngx_str_t *origin, ngx_str_t *target);
 
 extern ngx_rtmp_variable_value_t  ngx_rtmp_variable_null_value;
 extern ngx_rtmp_variable_value_t  ngx_rtmp_variable_true_value;

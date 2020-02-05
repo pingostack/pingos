@@ -749,6 +749,170 @@ ngx_rtmp_add_prefix_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 }
 
 
+static u_char *
+ngx_rtmp_strlechr(u_char *p, u_char *last)
+{
+    while (p != last) {
+        if ((*p >= '0' && *p <= '9') ||
+            (*p >= 'a' && *p <= 'z') ||
+            (*p >= 'A' && *p <= 'Z') ||
+            *p == '_')
+        {
+            p++;
+            continue;
+        }
+
+        return p;
+    }
+
+    return NULL;
+}
+
+
+ngx_int_t
+ngx_rtmp_variable_transform_index(ngx_conf_t *cf, ngx_str_t *origin, ngx_str_t *target)
+{
+    u_char                   *p, *e, *t;
+    u_char                   *wp, *we;
+    ngx_str_t                 str, var;
+    ngx_buf_t                *buf;
+    ngx_int_t                 index;
+
+    p = origin->data;
+    e = origin->data + origin->len;
+
+    buf = ngx_create_temp_buf(cf->pool, 2 * origin->len);
+    if (buf == NULL) {
+        return NGX_ERROR;
+    }
+
+    wp = buf->start;
+    we = buf->end;
+
+    while (p < e) {
+        t = ngx_strlchr(p, e, '$');
+        if (t == NULL) {
+            t = e;
+        }
+        str.data = p;
+        str.len = t - p;
+        wp = ngx_slprintf(wp, we, "%V", &str);
+
+        if (t == e) {
+            break;
+        }
+
+        var.data = ++t;
+        t = ngx_rtmp_strlechr(t, e);
+        if (t == NULL) {
+            t = e;
+        }
+        var.len = t - var.data;
+
+        index = ngx_rtmp_get_variable_index(cf, &var);
+        if (index == NGX_ERROR) {
+            return NGX_ERROR;
+        }
+
+        wp = ngx_slprintf(wp, we, "$%d", index);
+        p = t;
+    }
+
+    target->data = buf->start;
+    target->len = wp - buf->start;
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_rtmp_fetch_variable(ngx_rtmp_session_t *s, ngx_pool_t *pool,
+                          ngx_str_t *origin, ngx_str_t *target)
+{
+    ngx_rtmp_variable_value_t         *vv;
+    u_char                            *p, *e, *t;
+    u_char                            *wp, *we;
+    ngx_chain_t                       *ch, *cl, *ct;
+    u_char                            *pt;
+    ngx_uint_t                         length;
+    ngx_int_t                          index;
+    ngx_str_t                          var;
+
+    length = 0;
+    p = origin->data;
+    e = p + origin->len;
+
+    #define NGX_RTMP_NOTIFY_BUF(__start__, __end__)                            \
+    ct = cl;                                                                   \
+    pt = ngx_pcalloc(pool, sizeof(ngx_chain_t) +                               \
+                     sizeof(ngx_buf_t) + __end__ - __start__);                 \
+    cl = (ngx_chain_t*)pt;                                                     \
+    cl->buf = (ngx_buf_t*)(pt + sizeof(ngx_chain_t));                          \
+    cl->buf->start =                                                           \
+    cl->buf->pos =                                                             \
+    cl->buf->last = pt + sizeof(ngx_chain_t) + sizeof(ngx_buf_t);              \
+    if (ch == NULL) {                                                          \
+        ch = cl;                                                               \
+    } else {                                                                   \
+        ct->next = cl;                                                         \
+    }                                                                          \
+    cl->buf->last = ngx_cpymem(cl->buf->pos, __start__, __end__ - __start__);  \
+    length += __end__ - __start__
+
+    ch = cl = ct = NULL;
+
+    while(p < e) {
+        t = ngx_strlchr(p, e, '$');
+        if (t == NULL) {
+            t = e;
+        }
+        NGX_RTMP_NOTIFY_BUF(p, t);
+        if (t == e) {
+            break;
+        }
+
+        var.data = ++t;
+        t = ngx_rtmp_strlechr(t, e);
+        if (t == NULL) {
+            t = e;
+        }
+        var.len = t - var.data;
+        index = ngx_atoi(var.data, var.len);
+        vv = ngx_rtmp_get_indexed_variable(s, index);
+        if (vv == NULL) {
+            p = t;
+            continue;
+        }
+        wp = vv->data;
+        we = vv->data + vv->len;
+
+        NGX_RTMP_NOTIFY_BUF(wp, we);
+        p = t;
+    }
+
+    #undef NGX_RTMP_NOTIFY_BUF
+
+    wp = ngx_pcalloc(pool, length);
+    we = wp;
+
+    for (ct = ch; ct;) {
+        we = ngx_cpymem(we, ct->buf->pos, ct->buf->last - ct->buf->pos);
+        cl = ct->next;
+        ngx_pfree(pool, ct);
+        ct = cl;
+    }
+    target->data = wp;
+    target->len = we - wp;
+    if (target->len != length) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+        "variable: fetch_variable| target len = %d, content length = %d",
+         target->len, length);
+        return NGX_ERROR;
+    }
+
+    return NGX_OK;
+}
+
 ngx_rtmp_variable_t *
 ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 {
@@ -829,9 +993,10 @@ ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 ngx_int_t
 ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 {
-    ngx_uint_t                  i;
-    ngx_rtmp_variable_t        *v;
+    ngx_uint_t                  i = 0s, n;
+    ngx_rtmp_variable_t        *v, *av;
     ngx_rtmp_core_main_conf_t  *cmcf;
+    ngx_hash_key_t             *key;
 
     if (name->len == 0) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -842,6 +1007,7 @@ ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
     cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
 
     v = cmcf->variables.elts;
+    key = cmcf->variables_keys->keys.elts;
 
     if (v == NULL) {
         if (ngx_array_init(&cmcf->variables, cf->pool, 4,
@@ -876,10 +1042,30 @@ ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 
     ngx_strlow(v->name.data, name->data, name->len);
 
+    for (n = 0; n < cmcf->variables_keys->keys.nelts; n++) {
+        av = key[n].value;
+        if (av->get_handler
+            && v->name.len == key[n].key.len
+            && ngx_strncmp(v->name.data, key[n].key.data, v->name.len) == 0)
+        {
+            v->get_handler = av->get_handler;
+            v->data = av->data;
+            av->flags= NGX_RTMP_VAR_INDEXED;
+            v->flags = av->flags;
+            av->index = i;
+
+            goto next;
+        }
+    }
+
+    ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                "variables: get_variable_index| unknown \"%V\" variable",
+                &v->name);
+
+    return NGX_ERROR;
+
+next:
     v->set_handler = NULL;
-    v->get_handler = NULL;
-    v->data = 0;
-    v->flags = 0;
     v->index = cmcf->variables.nelts - 1;
 
     return v->index;

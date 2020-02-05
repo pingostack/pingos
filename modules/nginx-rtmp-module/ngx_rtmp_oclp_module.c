@@ -14,6 +14,7 @@
 #include "ngx_dynamic_resolver.h"
 #include "ngx_toolkit_misc.h"
 #include "ngx_netcall.h"
+#include "ngx_rtmp_variables.h"
 
 
 static ngx_live_record_start_pt     next_record_start;
@@ -355,8 +356,12 @@ ngx_rtmp_oclp_create_event(ngx_conf_t *cf, ngx_rtmp_oclp_event_t *event,
 
     for (i = 0; i < n; ++i) {
         if (ngx_strncmp(values[i].data, "args=", 5) == 0) {
-            event->args.len = values[i].len - 5;
-            event->args.data = values[i].data + 5;
+            tmp = values[i];
+            tmp.len -= 5;
+            tmp.data += 5;
+            ngx_rtmp_variable_transform_index(cf, &tmp, &event->args);
+//            event->args.len = values[i].len - 5;
+//            event->args.data = values[i].data + 5;
             continue;
         }
 
@@ -729,6 +734,7 @@ ngx_rtmp_oclp_common_url(ngx_str_t *url, ngx_rtmp_session_t *s,
     u_char                     *p, *buf;
     ngx_live_record_ctx_t      *lrctx;
     unsigned                    fill = 0;
+    ngx_str_t                   args;
 
     ngx_memzero(&ru, sizeof(ngx_request_url_t));
     ngx_parse_request_url(&ru, &event->url);
@@ -775,7 +781,8 @@ ngx_rtmp_oclp_common_url(ngx_str_t *url, ngx_rtmp_session_t *s,
     }
 
     if (event->args.len) {
-        p = ngx_snprintf(buf, len, "&%V", &event->args);
+        ngx_rtmp_fetch_variable(s, s->pool, &event->args, &args);
+        p = ngx_snprintf(buf, len, "&%V", &args);
         len -= p - buf;
         buf = p;
     }

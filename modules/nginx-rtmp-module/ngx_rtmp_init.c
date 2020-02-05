@@ -466,6 +466,9 @@ void
 ngx_rtmp_init_session(ngx_rtmp_session_t *s, ngx_connection_t *c)
 {
     ngx_rtmp_error_log_ctx_t       *ctx;
+    ngx_rtmp_core_main_conf_t  *cmcf;
+
+    cmcf = ngx_rtmp_get_module_main_conf(s, ngx_rtmp_core_module);
 
     c->data = s;
     s->connection = c;
@@ -482,6 +485,13 @@ ngx_rtmp_init_session(ngx_rtmp_session_t *s, ngx_connection_t *c)
     c->log_error = NGX_ERROR_INFO;
 
     ngx_rtmp_set_chunk_size(s, NGX_RTMP_DEFAULT_CHUNK_SIZE);
+
+    s->variables = ngx_pcalloc(s->connection->pool, cmcf->variables.nelts
+            * sizeof(ngx_http_variable_value_t));
+    if (s->variables == NULL) {
+        ngx_rtmp_finalize_session(s);
+        return;
+    }
 
     return;
 }
