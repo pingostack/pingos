@@ -993,7 +993,7 @@ ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 ngx_int_t
 ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 {
-    ngx_uint_t                  i = 0s, n;
+    ngx_uint_t                  i = 0, n;
     ngx_rtmp_variable_t        *v, *av;
     ngx_rtmp_core_main_conf_t  *cmcf;
     ngx_hash_key_t             *key;
