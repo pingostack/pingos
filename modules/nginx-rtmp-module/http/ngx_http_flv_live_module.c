@@ -131,7 +131,7 @@ ngx_http_flv_live_send_header(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    switch (hflcf->audio | (hflcf->video < 1)) {
+    switch (hflcf->audio | (hflcf->video << 1)) {
         case 1: // audio only
             b->start = b->pos = ngx_flv_live_audio_header;
             b->end = b->last = ngx_flv_live_audio_header +
@@ -528,6 +528,7 @@ ngx_http_flv_live_handler(ngx_http_request_t *r)
     ngx_rtmp_core_srv_conf_t           *cscf;
     ngx_rtmp_core_app_conf_t          **cacfp;
     ngx_http_cleanup_t                 *cln;
+    ngx_rtmp_core_main_conf_t          *cmcf;
 
     rc = ngx_http_discard_request_body(r);
 
@@ -611,6 +612,13 @@ ngx_http_flv_live_handler(ngx_http_request_t *r)
 
     s->stage = NGX_LIVE_PLAY;
     s->ptime = ngx_current_msec;
+
+    cmcf = ngx_rtmp_get_module_main_conf(s, ngx_rtmp_core_module);
+    s->variables = ngx_pcalloc(s->pool, cmcf->variables.nelts
+            * sizeof(ngx_http_variable_value_t));
+    if (s->variables == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
 
     if (ngx_rtmp_play_filter(s, &v) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;

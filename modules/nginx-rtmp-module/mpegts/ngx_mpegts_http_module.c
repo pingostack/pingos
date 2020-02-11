@@ -433,6 +433,7 @@ ngx_mpegts_http_handler(ngx_http_request_t *r)
     ngx_rtmp_core_srv_conf_t     *cscf;
     ngx_rtmp_core_app_conf_t    **cacfp;
     ngx_http_cleanup_t           *cln;
+    ngx_rtmp_core_main_conf_t    *cmcf;
 
     ctx = ngx_pcalloc(r->pool, sizeof(ngx_mpegts_http_ctx_t));
     if (ctx == NULL) {
@@ -511,6 +512,13 @@ ngx_mpegts_http_handler(ngx_http_request_t *r)
 
     s->stage = NGX_LIVE_PLAY;
     s->ptime = ngx_current_msec;
+
+    cmcf = ngx_rtmp_get_module_main_conf(s, ngx_rtmp_core_module);
+    s->variables = ngx_pcalloc(s->pool, cmcf->variables.nelts
+            * sizeof(ngx_http_variable_value_t));
+    if (s->variables == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
 
     if (ngx_rtmp_play_filter(s, &v) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;

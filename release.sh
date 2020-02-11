@@ -178,6 +178,7 @@ then
         apt-get install -y libpcre3 libpcre3-dev
         apt-get install -y zlib1g-dev
         apt-get install -y openssl
+        apt-get install -y libssl-dev
 
     elif [ "$CMD" == "brew" ]
     then

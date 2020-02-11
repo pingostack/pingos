@@ -611,6 +611,7 @@ ngx_hls_http_create_session(ngx_http_request_t *r)
     ngx_uint_t                  n;
     ngx_rtmp_core_srv_conf_t   *cscf;
     ngx_rtmp_core_app_conf_t  **cacfp;
+    ngx_rtmp_core_main_conf_t  *cmcf;
 
     hlcf = ngx_http_get_module_loc_conf(r, ngx_hls_http_module);
 
@@ -677,6 +678,13 @@ ngx_hls_http_create_session(ngx_http_request_t *r)
     s->stage = NGX_LIVE_PLAY;
     s->ptime = ngx_current_msec;
 //    s->connection = r->connection;
+
+    cmcf = ngx_rtmp_get_module_main_conf(s, ngx_rtmp_core_module);
+    s->variables = ngx_pcalloc(s->pool, cmcf->variables.nelts
+            * sizeof(ngx_http_variable_value_t));
+    if (s->variables == NULL) {
+        return NULL;
+    }
 
     if (ngx_rtmp_play_filter(s, &v) != NGX_OK) {
         return NULL;
