@@ -486,7 +486,7 @@ ngx_rtmp_init_session(ngx_rtmp_session_t *s, ngx_connection_t *c)
 
     ngx_rtmp_set_chunk_size(s, NGX_RTMP_DEFAULT_CHUNK_SIZE);
 
-    s->variables = ngx_pcalloc(s->connection->pool, cmcf->variables.nelts
+    s->variables = ngx_pcalloc(s->pool, cmcf->variables.nelts
             * sizeof(ngx_http_variable_value_t));
     if (s->variables == NULL) {
         ngx_rtmp_finalize_session(s);
