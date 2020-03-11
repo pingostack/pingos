@@ -114,7 +114,7 @@ http {
            chunked_transfer_encoding on;
             root html/;
         }
-        location /flv {
+        location /live {
             flv_live 1935 app=live;
         }
         location /ts {
@@ -162,7 +162,7 @@ rtmp://your-server-ip/live/stream-name
 **播放地址：**
 
  - rtmp播放地址：  rtmp://your-server-ip/live/stream-name
-- http-flv播放地址：http://your-server-ip/flv/stream-name
+- http-flv播放地址：http://your-server-ip/live/stream-name
 - http-ts播放地址：http://your-server-ip/ts/stream-name
 - hls播放地址：http://your-server-ip/hls/stream-name.m3u8
 - “hls+”播放地址：http://your-server-ip/hls2/stream-name.m3u8
@@ -279,7 +279,7 @@ parg_ | 获取到pargs参数中的某个参数，例如pargs为k0=0&k1=1，那�
 |--|--|--|--|
 | live | 布尔类型 | off | rtmp服务开关，必须配置成on才能开启rtmp服务 |
 | sync | 时间 | 300ms | 当掉包导致时间不连续时，超过多少时间则重新发送音视频头，以使播放器重新开始计算时间 |
-| wait_key | 布尔类型 | off | 是否一定要等到关键帧才开始给播放端下发数据 |
+| wait_key | 布尔类型 | on | 是否一定要等到关键帧才开始给播放端下发数据 |
 | wait_video | 布尔类型 | off | 是否一定要等到有视频帧才开始给播放端下发数据 |
 | publish_notify | 布尔类型 | off | 是否在收到rtmp的publish消息后给推流端回复消息 |
 | play_restart | 布尔类型 | off | 是否在收到rtmp的play/stop消息后给播放端回复消息 |
