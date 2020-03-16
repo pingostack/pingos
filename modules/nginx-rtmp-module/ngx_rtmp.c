@@ -40,6 +40,7 @@ ngx_thread_volatile ngx_queue_t     ngx_rtmp_init_queue;
 ngx_thread_volatile ngx_event_t    *ngx_rtmp_init_queue;
 #endif
 
+ngx_int_t NGX_RTMP_HEVC_CODEC_ID = NGX_RTMP_VIDEO_H265;
 
 ngx_uint_t  ngx_rtmp_max_module;
 

@@ -160,6 +160,7 @@ enum {
     NGX_RTMP_VIDEO_H265             = 12
 };
 
+extern ngx_int_t NGX_RTMP_HEVC_CODEC_ID;
 
 typedef struct {
     uint32_t                csid;       /* chunk stream id */

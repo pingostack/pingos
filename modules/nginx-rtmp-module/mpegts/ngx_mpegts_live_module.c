@@ -1,3 +1,8 @@
+
+/*
+ * Copyright (C) Pingo (cczjp89@gmail.com)
+ */
+
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
@@ -837,6 +842,9 @@ ngx_mpegts_live_h265_handler(ngx_rtmp_session_t *s, ngx_rtmp_frame_t *f)
     ngx_rtmp_header_t          *h;
     ngx_chain_t                *in;
     ngx_int_t                   rc;
+    ngx_rtmp_core_app_conf_t   *cacf;
+
+    cacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_core_module);
 
     h = &f->hdr;
     in = f->chain;
@@ -865,7 +873,7 @@ ngx_mpegts_live_h265_handler(ngx_rtmp_session_t *s, ngx_rtmp_frame_t *f)
     }
 
     /* H265 is supported */
-    if (ctx->avc_codec->video_codec_id != NGX_RTMP_VIDEO_H265)
+    if (ctx->avc_codec->video_codec_id != cacf->hevc_codec)
     {
         return NGX_OK;
     }
@@ -1652,7 +1660,7 @@ ngx_mpegts_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         /* h264 h265 */
         if (codec_ctx->video_codec_id == NGX_RTMP_VIDEO_H264) {
             ngx_mpegts_live_h264_handler(s, &frame);
-        } else if (codec_ctx->video_codec_id == NGX_RTMP_VIDEO_H265) {
+        } else if (codec_ctx->video_codec_id == cacf->hevc_codec) {
             ngx_mpegts_live_h265_handler(s, &frame);
         }
         break;

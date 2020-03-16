@@ -470,6 +470,8 @@ ngx_rtmp_core_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_uint_value(conf->merge_frame, prev->merge_frame, 32);
     ngx_conf_merge_value(conf->tcp_nodelay, prev->tcp_nodelay, 1);
 
+    NGX_RTMP_HEVC_CODEC_ID = conf->hevc_codec;
+
     return NGX_CONF_OK;
 }
 

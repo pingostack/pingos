@@ -159,23 +159,15 @@ ngx_rtmp_mpegts_gen_pmt(ngx_int_t vcodec, ngx_int_t acodec,
 
     p = ngx_cpymem(p, ngx_mpegts_pmt_header, sizeof(ngx_mpegts_pmt_header));
 
-    switch (vcodec) {
-        case 0: //ignore
-        break;
-
-        case NGX_RTMP_VIDEO_H264:
-            vpid = NGX_RTMP_MPEGTS_PID_H264;
-        break;
-
-        case NGX_RTMP_VIDEO_H265:
-            vpid = NGX_RTMP_MPEGTS_PID_H265;
-        break;
-
-        default:
-            if (log) {
-                ngx_log_error(NGX_LOG_ERR, log, 0,
-                    "rtmp: gen_pmt| unknown video codec (%d)", vcodec);
-            }
+    if (vcodec == 0) {
+        // ignore
+    } else if (vcodec ==  NGX_RTMP_VIDEO_H264) {
+        vpid = NGX_RTMP_MPEGTS_PID_H264;
+    } else if (vcodec == NGX_RTMP_HEVC_CODEC_ID) {
+        vpid = NGX_RTMP_MPEGTS_PID_H265;
+    } else if (log) {
+        ngx_log_error(NGX_LOG_ERR, log, 0,
+            "rtmp: gen_pmt| unknown video codec (%d)", vcodec);
     }
 
     switch (acodec) {
