@@ -41,21 +41,21 @@
 
 ### 快速安装
 
+- [使用Docker镜像](docker/README.md)
 
-```bash
+- 直接安装到系统
+    ```bash
+    # 快速安装
+    git clone https://github.com/im-pingo/pingos.git
 
-# 快速安装
-git clone https://github.com/im-pingo/pingos.git
+    cd pingos
 
-cd pingos
+    ./release.sh -i
 
-./release.sh -i
-
-# 启动服务
-cd /usr/local/pingos/
-./sbin/nginx
-
-```
+    # 启动服务
+    cd /usr/local/pingos/
+    ./sbin/nginx
+    ```
 
 ### 配置模板（此配置能够满足单点服务）
 
