@@ -1,6 +1,6 @@
 # PingOS
 
-[![Build Status](doc/img/logo-banner-blue-400x200.jpeg)](https://pingos.io) 
+[![logo](doc/img/logo-banner-blue-400x200.jpeg)](https://pingos.io) 
 
 [![Build Status](https://travis-ci.com/pingostack/pingos.svg?branch=master)](https://travis-ci.com/pingostack/pingos) [![website](https://img.shields.io/badge/website-https://pingos.io-red.svg)](https://pingos.io)
 
@@ -83,5 +83,5 @@
 > 这个播放器是基于flv.js的网页播放器，可以实现无插件播放http-flv直播流。
 > 一旦你能够访问这个页面，说明你的直播服务器已经成功搭建起来了。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20191118235512737.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ltcGluZ28=,size_16,color_FFFFFF,t_70)
+![h5player](doc/img/flvplayer.png)
 <div class="article__content" markdown="1">
