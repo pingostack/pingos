@@ -6,6 +6,8 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include "ngx_live_relay.h"
+#include "ngx_rtmp_dynamic.h"
+#include "ngx_dynamic_resolver.h"
 
 
 static ngx_live_push_pt                 next_push;
@@ -359,6 +361,8 @@ ngx_live_relay_push_pull(ngx_conf_t *cf, ngx_live_relay_t *relay)
             if (url->port == 0) {
                 return "invalid port";
             }
+
+            ngx_dynamic_resolver_add_domain(&url->url.host, cf->cycle);
 
             continue;
         }

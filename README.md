@@ -1,8 +1,11 @@
 # PingOS
 
-[![logo](doc/img/logo-banner-blue-400x200.jpeg)](https://pingos.io) 
+[![logo](doc/img/logo-banner-white-400x200.png)](https://pingos.io)
+[![website](https://img.shields.io/badge/website-https://pingos.io-red.svg)](https://pingos.io)
+[![Build Status](https://travis-ci.com/pingostack/pingos.svg?branch=master)](https://travis-ci.com/pingostack/pingos)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-[![Build Status](https://travis-ci.com/pingostack/pingos.svg?branch=master)](https://travis-ci.com/pingostack/pingos) [![website](https://img.shields.io/badge/website-https://pingos.io-red.svg)](https://pingos.io)
+
 
 这是一个集众多流媒体协议为一身的流媒体服务器，目的是为了让开发者和不懂技术的普通人都能很快的构建自己的直播服务系统。
 
