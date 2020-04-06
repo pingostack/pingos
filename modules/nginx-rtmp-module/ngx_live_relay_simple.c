@@ -360,6 +360,8 @@ ngx_live_relay_push_pull(ngx_conf_t *cf, ngx_live_relay_t *relay)
                 return "invalid port";
             }
 
+            ngx_dynamic_resolver_add_domain(&url->url.host, cf->cycle);
+
             continue;
         }
 
