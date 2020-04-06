@@ -6,6 +6,8 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include "ngx_live_relay.h"
+#include "ngx_rtmp_dynamic.h"
+#include "ngx_dynamic_resolver.h"
 
 
 static ngx_live_push_pt                 next_push;
