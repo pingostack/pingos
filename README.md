@@ -1,37 +1,29 @@
 # PingOS
 
 [![logo](doc/img/logo-banner-white-400x200.png)](https://pingos.io)
-[![website](https://img.shields.io/badge/website-https://pingos.io-red.svg)](https://pingos.io)
-[![Build Status](https://travis-ci.com/pingostack/pingos.svg?branch=master)](https://travis-ci.com/pingostack/pingos)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+[![website](https://img.shields.io/badge/website-https://pingos.io-red.svg)](https://pingos.io) [![Build Status](https://travis-ci.com/pingostack/pingos.svg?branch=master)](https://travis-ci.com/pingostack/pingos) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 
-
-这是一个集众多流媒体协议为一身的流媒体服务器，目的是为了让开发者和不懂技术的普通人都能很快的构建自己的直播服务系统。
+> [PingOS](https://pingos.io/docs/zh/quick-start)依赖[NGINX](https://github.com/nginx/nginx)构建，并且继承[arut](https://github.com/arut/nginx-rtmp-module)和[AlexWoo](https://github.com/AlexWoo/nginx-rtmp-module)的nginx-rtmp-module模块。在其基础上除了修复和优化arut和AlexWoo版本存在的部分问题外，PingOS在编码和直播协议种类以及其他方面做了多项功能扩展。
 
 ---
 
 # 服务器功能
 
-- HTTP(S)-FLV 播放
-- HTTP(S)-TS 播放
-- HLS+ 播放
-- 多进程
-- 动态（静态）回源（ HTTP(S)-FLV 和 rtmp协议 ）
-- 动态（静态）转推 （ rtmp协议 ）
-- HTTP-FLV回源拉流
-- RTMP回源拉流
-- 秒开功能
-- GOP缓存
-- VHOST功能
-- application支持通配符
-- H265编码
-- mp3编码
-- 服务端录像
-- html5网页播放器集成
-- 控制台接口
-- 流量计费
-- 配置动态加载
+- **直播协议：** RTMP、HTTP(S)-FLV、HTTP(S)-TS、HLS（支持HTTPS）、HLS+（支持HTTPS）、DASH（支持HTTPS）。
+- **音视频编码：** H264、H265、MP3、AAC。
+- **直播录像：** FLV文件格式和TS文件格式。
+- **GOP缓存：** 实现秒开和内存复用。
+- **application支持通配符：** “ * ”号通配符实现自动匹配推拉流时使用的application名字，无需累赘的配置。
+- **VHOST功能：** 支持配置多个server域名。
+- **控制台接口：** 通过HTTP API接口控制推流、拉流以及录像过程。
+- **配置动态加载：** 修改配置文件后无需对nginx做任何操作就可读取最新配置。
+- **流量计费：** 通过配置自定义流量日志。
+- **变量参数配置：** 配置文件中使用变量。
+- **进程间回源：** 进程间相互拉流，解决了原生nginx-rtmp-module模块多进程拉流失败的问题。
+- **集群化功能：** 服务器间推拉流功能（http-flv、rtmp协议）。
+- **html5网页播放器：** [pingos-player](https://github.com/pingostack/pingos-player)播放器将持续兼容各浏览器平台，以及多种直播协议。
 
 # 引导
 
