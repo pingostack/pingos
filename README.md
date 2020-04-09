@@ -36,7 +36,7 @@
 - 直接安装到系统
     ```bash
     # 快速安装
-    git clone https://github.com/im-pingo/pingos.git
+    git clone https://github.com/pingostack/pingos.git
 
     cd pingos
 
