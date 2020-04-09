@@ -319,17 +319,33 @@ ngx_hls_http_master_m3u8_handler(ngx_http_request_t *r,
         }
         ngx_snprintf(uri.data, uri.len, "%V%V", &location, &uri_tail);
     }
-
-    m3u8_url.len = ngx_strlen("http://") +
+#if (NGX_HTTP_SSL)
+    if (r->connection->ssl) {
+        m3u8_url.len = ngx_strlen("https://") +
                host.len +
                uri.len +
                NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
                ngx_strlen(sstr);
 
-    m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
+        m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
 
-    ngx_snprintf(m3u8_url.data, m3u8_url.len, "http://%V%V?%s=%s",
-                   &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+        ngx_snprintf(m3u8_url.data, m3u8_url.len, "https://%V%V?%s=%s",
+                    &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+
+    } else
+#endif
+    {
+        m3u8_url.len = ngx_strlen("http://") +
+               host.len +
+               uri.len +
+               NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
+               ngx_strlen(sstr);
+
+        m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
+
+        ngx_snprintf(m3u8_url.data, m3u8_url.len, "http://%V%V?%s=%s",
+                    &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+    }
 
     m3u8 = ngx_create_temp_buf(r->connection->pool, 64 * 1024);
     m3u8->memory = 1;
@@ -403,16 +419,32 @@ ngx_hls_http_redirect_handler(ngx_http_request_t *r,
         ngx_snprintf(uri.data, uri.len, "%V%V", &location, &uri_tail);
     }
 
-    m3u8_url.len = ngx_strlen("http://") +
-               host.len +
-               uri.len +
-               NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
-               ngx_strlen(sstr);
+    #if (NGX_HTTP_SSL)
+        if (r->connection->ssl) {
+            m3u8_url.len = ngx_strlen("https://") +
+            host.len +
+            uri.len +
+            NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
+            ngx_strlen(sstr);
 
-    m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
+            m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
 
-    ngx_snprintf(m3u8_url.data, m3u8_url.len, "http://%V%V?%s=%s",
-                   &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+            ngx_snprintf(m3u8_url.data, m3u8_url.len, "https://%V%V?%s=%s",
+                        &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+        } else
+    #endif
+        {
+            m3u8_url.len = ngx_strlen("http://") +
+            host.len +
+            uri.len +
+            NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
+            ngx_strlen(sstr);
+
+            m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
+
+            ngx_snprintf(m3u8_url.data, m3u8_url.len, "http://%V%V?%s=%s",
+                        &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+        }
 
     ngx_http_set_header_out(r, &ngx_302_headers[0].key, &m3u8_url);
 

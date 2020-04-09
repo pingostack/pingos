@@ -1003,7 +1003,7 @@ ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s)
 
         { NGX_RTMP_AMF_STRING,
           ngx_string("Server"),
-          "Pingo (https://github.com/im-pingo/nginx-rtmp-module)", 0 },
+          "PingOS (https://pingos.io)", 0 },
 
         { NGX_RTMP_AMF_NUMBER,
           ngx_string("width"),

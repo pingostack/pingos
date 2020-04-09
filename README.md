@@ -5,7 +5,7 @@
 [![website](https://img.shields.io/badge/website-https://pingos.io-red.svg)](https://pingos.io) [![Build Status](https://travis-ci.com/pingostack/pingos.svg?branch=master)](https://travis-ci.com/pingostack/pingos) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 
-> [PingOS](https://pingos.io/docs/zh/quick-start)依赖[NGINX](https://github.com/nginx/nginx)构建，并且继承[arut](https://github.com/arut/nginx-rtmp-module)和[AlexWoo](https://github.com/AlexWoo/nginx-rtmp-module)的nginx-rtmp-module模块。在其基础上除了修复和优化arut和AlexWoo版本存在的部分问题外，PingOS在编码和直播协议种类以及其他方面做了多项功能扩展。
+> [PingOS](https://pingos.io/docs/zh/quick-start)依赖[NGINX](https://github.com/nginx/nginx)构建，并且继承[arut](https://github.com/arut/nginx-rtmp-module)和[AlexWoo](https://github.com/AlexWoo/nginx-rtmp-module)的nginx-rtmp-module模块。修复arut和AlexWoo版本存在的部分问题外，PingOS在编码和直播协议以及其他方面做了多项功能扩展。
 
 ---
 
@@ -51,8 +51,7 @@
 
 ### 推流
 
->  目前仅支持rtmp协议推流
->  推流地址：rtmp://ip/live/流名
+推流地址：rtmp://ip/live/流名
 
 ### 播放地址
 
