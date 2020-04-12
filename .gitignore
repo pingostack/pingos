@@ -3,3 +3,4 @@ nginx/
 openresty/
 .git/
 *.code-workspace
+.DS_Store

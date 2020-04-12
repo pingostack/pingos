@@ -40,7 +40,6 @@ typedef struct {
     ngx_msec_t                          playlen;
     ngx_uint_t                          winfrags;
     ngx_uint_t                          minfrags;
-    ngx_flag_t                          nested;
     ngx_uint_t                          slicing;
     ngx_uint_t                          type;
     ngx_path_t                         *slot;
@@ -78,17 +77,24 @@ static ngx_conf_enum_t                  ngx_hls_live_slicing_slots[] = {
     { ngx_null_string,                  0 }
 };
 
-
+/*
 static ngx_conf_enum_t                  ngx_hls_live_type_slots[] = {
     { ngx_string("live"),               NGX_RTMP_HLS_TYPE_LIVE  },
     { ngx_string("event"),              NGX_RTMP_HLS_TYPE_EVENT },
     { ngx_null_string,                  0 }
 };
-
+*/
 
 static ngx_command_t ngx_hls_live_commands[] = {
 
     { ngx_string("hls2memory"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_flag_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_hls_live_app_conf_t, hls),
+      NULL },
+
+    { ngx_string("hls2"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
@@ -123,26 +129,12 @@ static ngx_command_t ngx_hls_live_commands[] = {
       offsetof(ngx_hls_live_app_conf_t, minfrags),
       NULL },
 
-    { ngx_string("hls2_nested"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_flag_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_hls_live_app_conf_t, nested),
-      NULL },
-
     { ngx_string("hls2_fragment_slicing"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_hls_live_app_conf_t, slicing),
       &ngx_hls_live_slicing_slots },
-
-    { ngx_string("hls2_type"),
-      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_enum_slot,
-      NGX_RTMP_APP_CONF_OFFSET,
-      offsetof(ngx_hls_live_app_conf_t, type),
-      &ngx_hls_live_type_slots },
 
     { ngx_string("hls2_audio_buffer_size"),
       NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
@@ -459,9 +451,9 @@ ngx_hls_live_update_playlist(ngx_rtmp_session_t *s)
                      "#EXT-X-TARGETDURATION:%ui\n",
                      ctx->nfrag, max_frag);
 
-    if (hacf->type == NGX_RTMP_HLS_TYPE_EVENT) {
-        p = ngx_slprintf(p, end, "#EXT-X-PLAYLIST-TYPE: EVENT\n");
-    }
+//    if (hacf->type == NGX_RTMP_HLS_TYPE_EVENT) {
+//        p = ngx_slprintf(p, end, "#EXT-X-PLAYLIST-TYPE: EVENT\n");
+//    }
 
     name_part = s->name;
 
@@ -1066,11 +1058,9 @@ ngx_hls_live_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_msec_value(conf->fraglen, prev->fraglen, 5000);
     ngx_conf_merge_msec_value(conf->max_fraglen, prev->max_fraglen,
                               conf->fraglen * 10);
-    ngx_conf_merge_msec_value(conf->playlen, prev->playlen, 30000);
+    ngx_conf_merge_msec_value(conf->playlen, prev->playlen, conf->fraglen * 3);
     ngx_conf_merge_uint_value(conf->slicing, prev->slicing,
                               NGX_RTMP_HLS_SLICING_PLAIN);
-    ngx_conf_merge_uint_value(conf->type, prev->type,
-                              NGX_RTMP_HLS_TYPE_LIVE);
     ngx_conf_merge_value(conf->cleanup, prev->cleanup, 1);
     ngx_conf_merge_str_value(conf->base_url, prev->base_url, "");
     ngx_conf_merge_uint_value(conf->minfrags, prev->minfrags, 2);
