@@ -52,9 +52,9 @@ char *ngx_live_err[] = {
     "relay_timeout",
     "control_drop",
     "drop_idle",
-    "oclp_notify_err",
-    "oclp_relay_err",
-    "oclp_para_err",
+    "notify_notify_err",
+    "notify_relay_err",
+    "notify_para_err",
     "relay_close",
 };
 

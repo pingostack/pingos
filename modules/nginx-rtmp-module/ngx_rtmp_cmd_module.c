@@ -7,7 +7,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include "ngx_rtmp_cmd_module.h"
-#include "ngx_rtmp_oclp_module.h"
+#include "ngx_rtmp_notify_module.h"
 #include "ngx_rtmp_streams.h"
 #include "ngx_stream_zone_module.h"
 #include "ngx_dynamic_conf.h"
@@ -218,7 +218,7 @@ ngx_rtmp_cmd_stream_init(ngx_rtmp_session_t *s, u_char *name, u_char *args,
     ngx_live_create_ctx(s, publishing);
     s->publishing = publishing;
 
-    ngx_rtmp_oclp_stream_start(s);
+    ngx_rtmp_notify_stream_start(s);
 }
 
 ngx_int_t
@@ -278,7 +278,7 @@ ngx_rtmp_close_stream_filter(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         if (s->live_stream->pslot == ngx_process_slot) {
             ngx_stream_zone_delete_stream(&s->stream);
         }
-        ngx_rtmp_oclp_stream_done(s);
+        ngx_rtmp_notify_stream_done(s);
         ngx_live_delete_stream(&s->serverid, &s->stream);
     }
 

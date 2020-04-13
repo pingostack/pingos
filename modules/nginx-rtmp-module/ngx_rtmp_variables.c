@@ -100,8 +100,8 @@ static ngx_rtmp_variable_t  ngx_rtmp_core_variables[] = {
     { ngx_string("groupid"), NULL, ngx_rtmp_variable_session_get_str,
       offsetof(ngx_rtmp_session_t, groupid), NGX_RTMP_VAR_NOCACHEABLE, 0},
 
-    { ngx_string("oclp_status"), NULL, ngx_rtmp_variable_session_get_int,
-      offsetof(ngx_rtmp_session_t, oclp_status), NGX_RTMP_VAR_NOCACHEABLE, 0},
+    { ngx_string("notify_status"), NULL, ngx_rtmp_variable_session_get_int,
+      offsetof(ngx_rtmp_session_t, notify_status), NGX_RTMP_VAR_NOCACHEABLE, 0},
 
     { ngx_string("finalize_reason"), NULL, ngx_rtmp_variable_finalize_reason,
       0, NGX_RTMP_VAR_NOCACHEABLE, 0},

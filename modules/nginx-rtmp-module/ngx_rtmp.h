@@ -396,7 +396,7 @@ struct ngx_rtmp_session_s {
     ngx_rtmp_prepared_pt    prepare_handler;
 
     /* for trace and statistics */
-    ngx_int_t               oclp_status;
+    ngx_int_t               notify_status;
     ngx_uint_t              finalize_reason;
     ngx_uint_t              stage;
     ngx_msec_t              init_time;
@@ -451,7 +451,7 @@ struct ngx_live_stream_s {
     ngx_rtmp_core_ctx_t        *publish_ctx;
     ngx_rtmp_core_ctx_t        *play_ctx;
 
-    /* oclp */
+    /* notify */
     ngx_netcall_ctx_t          *stream_nctx;
 
     ngx_live_stream_t          *next;
@@ -468,7 +468,7 @@ struct ngx_live_stream_s {
     ngx_msec_t                  epoch;
     unsigned                    active:1;
     unsigned                    publishing:1;
-    unsigned                    oclp_meta:1;
+    unsigned                    notify_meta:1;
 };
 
 struct ngx_live_server_s {
