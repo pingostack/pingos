@@ -137,7 +137,7 @@ ngx_dynamic_resolver_init_conf(ngx_cycle_t *cycle, void *conf)
 {
     ngx_dynamic_resolver_conf_t      *drcf = conf;
 
-    ngx_conf_init_msec_value(drcf->refresh_interval, 0);
+    ngx_conf_init_msec_value(drcf->refresh_interval, 5000);
     ngx_conf_init_uint_value(drcf->domain_buckets, 101);
 
     if (drcf->refresh_interval > 0 && drcf->domain_buckets > 0) {

@@ -7,33 +7,46 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
+typedef struct ngx_stream_zone_hash_s ngx_stream_zone_hash_t;
+typedef struct ngx_stream_zone_node_s ngx_stream_zone_node_t;
+typedef struct ngx_stream_zone_conf_s ngx_stream_zone_conf_t;
 
-static ngx_int_t ngx_stream_zone_init_process(ngx_cycle_t *cycle);
-static void ngx_stream_zone_exit_process(ngx_cycle_t *cycle);
-static void *ngx_stream_zone_create_conf(ngx_cycle_t *cf);
-static char *ngx_stream_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static ngx_int_t
+ngx_stream_zone_init_process(ngx_cycle_t *cycle);
+static void
+ngx_stream_zone_exit_process(ngx_cycle_t *cycle);
+static void *
+ngx_stream_zone_create_conf(ngx_cycle_t *cf);
+static char *
+ngx_stream_zone_init_conf(ngx_cycle_t *cycle, void *conf);
+static char *
+ngx_stream_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char *
+ngx_stream_zone_shm_init(ngx_shm_t *shm, ngx_stream_zone_conf_t *szcf);
 
 
 #define NAME_LEN    1024
 
 static ngx_str_t stream_zone_key = ngx_string("stream_zone");
 
-typedef struct {
+struct ngx_stream_zone_node_s {
     u_char                              name[NAME_LEN];
     ngx_int_t                           slot; /* process slot */
     ngx_int_t                           idx;
     ngx_int_t                           next; /* idx of stream node */
-} ngx_stream_zone_node_t;
+};
 
-typedef struct {
+struct ngx_stream_zone_hash_s {
     ngx_shmtx_t                         mutex;
     ngx_shmtx_sh_t                      lock;
     ngx_int_t                           node; /* idx of stream node */
-} ngx_stream_zone_hash_t;
+};
 
-typedef struct {
+struct ngx_stream_zone_conf_s {
     ngx_int_t                           nbuckets;
     ngx_int_t                           nstreams;
+
+    ngx_pool_t                         *pool;
 
     ngx_shmtx_t                        *mutex;
     ngx_shmtx_sh_t                     *lock;
@@ -41,7 +54,7 @@ typedef struct {
     ngx_stream_zone_node_t             *stream_node;/* node in shm */
     ngx_int_t                          *free_node;  /* free node chain */
     ngx_int_t                          *alloc;      /* node number in use*/
-} ngx_stream_zone_conf_t;
+};
 
 
 static ngx_command_t  ngx_stream_zone_commands[] = {
@@ -60,7 +73,7 @@ static ngx_command_t  ngx_stream_zone_commands[] = {
 static ngx_core_module_t  ngx_stream_zone_module_ctx = {
     ngx_string("rtmp_stream_zone"),
     ngx_stream_zone_create_conf,            /* create conf */
-    NULL                                    /* init conf */
+    ngx_stream_zone_init_conf               /* init conf */
 };
 
 
@@ -143,8 +156,36 @@ ngx_stream_zone_create_conf(ngx_cycle_t *cf)
 
     conf->nbuckets = NGX_CONF_UNSET;
     conf->nstreams = NGX_CONF_UNSET;
+    conf->pool = ngx_create_pool(4096, cf->log);
 
     return conf;
+}
+
+static char *
+ngx_stream_zone_init_conf(ngx_cycle_t *cycle, void *conf)
+{
+    size_t                              len;
+    ngx_shm_t                           shm;
+    ngx_stream_zone_conf_t             *szcf = conf;
+
+    ngx_conf_init_value(szcf->nbuckets, 512);
+    ngx_conf_init_value(szcf->nstreams, 40960);
+
+    /* create shm zone */
+    len = sizeof(ngx_shmtx_t) + sizeof(ngx_shmtx_sh_t)
+        + sizeof(ngx_stream_zone_hash_t) * szcf->nbuckets
+        + sizeof(ngx_stream_zone_node_t) * szcf->nstreams
+        + sizeof(ngx_int_t) + sizeof(ngx_int_t);
+
+    shm.size = len;
+    shm.name = stream_zone_key;
+    shm.log = cycle->log;
+
+    if (ngx_shm_alloc(&shm) != NGX_OK) {
+        return NGX_CONF_ERROR;
+    }
+
+    return ngx_stream_zone_shm_init(&shm, szcf);
 }
 
 static void
@@ -208,8 +249,7 @@ ngx_stream_zone_exit_process(ngx_cycle_t *cycle)
 }
 
 static char *
-ngx_stream_zone_shm_init(ngx_conf_t *cf, ngx_shm_t *shm,
-    ngx_stream_zone_conf_t *szcf)
+ngx_stream_zone_shm_init(ngx_shm_t *shm, ngx_stream_zone_conf_t *szcf)
 {
     u_char                             *p;
     ngx_int_t                           i, next;
@@ -239,12 +279,12 @@ ngx_stream_zone_shm_init(ngx_conf_t *cf, ngx_shm_t *shm,
     p = NULL;
 
 #else
-        p = ngx_pnalloc(cf->pool, cf->cycle->lock_file.len
+        p = ngx_pnalloc(szcf->pool, cycle->lock_file.len
                 + stream_zone_key.len);
         if (p == NULL) {
             return NGX_CONF_ERROR;
         }
-        *ngx_sprintf(p, "%V%V", &cf->cycle->lock_file, &stream_zone_key) = 0;
+        *ngx_sprintf(p, "%V%V", &cycle->lock_file, &stream_zone_key) = 0;
 
 #endif
 
@@ -258,12 +298,12 @@ ngx_stream_zone_shm_init(ngx_conf_t *cf, ngx_shm_t *shm,
         p = NULL;
 
 #else
-        p = ngx_pnalloc(cf->pool, cf->cycle->lock_file.len + stream_zone_key.len
+        p = ngx_pnalloc(szcf->pool, cycle->lock_file.len + stream_zone_key.len
                 + NGX_INT32_LEN);
         if (p == NULL) {
             return NGX_CONF_ERROR;
         }
-        *ngx_sprintf(p, "%V%V%d", &cf->cycle->lock_file,
+        *ngx_sprintf(p, "%V%V%d", &cycle->lock_file,
                            &stream_zone_key, i) = 0;
 
 #endif
@@ -300,8 +340,6 @@ ngx_stream_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_uint_t                          i;
     ngx_str_t                          *value;
-    size_t                              len;
-    ngx_shm_t                           shm;
     ngx_stream_zone_conf_t             *szcf = conf;
 
     value = cf->args->elts;
@@ -337,21 +375,7 @@ ngx_stream_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    /* create shm zone */
-    len = sizeof(ngx_shmtx_t) + sizeof(ngx_shmtx_sh_t)
-        + sizeof(ngx_stream_zone_hash_t) * szcf->nbuckets
-        + sizeof(ngx_stream_zone_node_t) * szcf->nstreams
-        + sizeof(ngx_int_t) + sizeof(ngx_int_t);
-
-    shm.size = len;
-    shm.name = stream_zone_key;
-    shm.log = cf->cycle->log;
-
-    if (ngx_shm_alloc(&shm) != NGX_OK) {
-        return NGX_CONF_ERROR;
-    }
-
-    return ngx_stream_zone_shm_init(cf, &shm, szcf);
+    return NGX_CONF_OK;
 }
 
 
