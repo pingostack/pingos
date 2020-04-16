@@ -57,13 +57,13 @@
 
 - rtmp 播放：rtmp://ip/live/流名
 
-- http-flv 播放：http://ip/flv/流名
+- http(s)-flv 播放：http(s)://ip/flv/流名
 
-- hls 播放：http://ip/hls/流名.m3u8
+- hls 播放：http(s)://ip/hls/流名.m3u8
 
-- hls+ 播放：http://ip/hls2/流名.m3u8
+- hls+ 播放：http(s)://ip/hls2/流名.m3u8
 
-- http-ts 播放：http://ip/ts/流名
+- http(s)-ts 播放：http(s)://ip/ts/流名
 
 ### 直播流监控后台
 
