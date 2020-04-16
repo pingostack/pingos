@@ -57,7 +57,7 @@
 
 - rtmp 播放：rtmp://ip/live/流名
 
-- http-flv 播放：http://ip/live/流名
+- http-flv 播放：http://ip/flv/流名
 
 - hls 播放：http://ip/hls/流名.m3u8
 
