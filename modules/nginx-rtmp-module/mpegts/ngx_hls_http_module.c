@@ -287,6 +287,9 @@ ngx_hls_http_master_m3u8_handler(ngx_http_request_t *r,
     ngx_str_t                            uri_tail;
     ngx_buf_t                           *m3u8;
     ngx_chain_t                          out;
+    ngx_str_t                            scheme = ngx_string("");
+    ngx_str_t                            http = ngx_string("http");
+    ngx_str_t                            https = ngx_string("https");
 
     host = r->headers_in.host->value;
 
@@ -319,33 +322,29 @@ ngx_hls_http_master_m3u8_handler(ngx_http_request_t *r,
         }
         ngx_snprintf(uri.data, uri.len, "%V%V", &location, &uri_tail);
     }
+
+    ngx_http_arg(r, (u_char*)"scheme", 6, &scheme);
+    if (scheme.len == 0) {
 #if (NGX_HTTP_SSL)
-    if (r->connection->ssl) {
-        m3u8_url.len = ngx_strlen("https://") +
-               host.len +
-               uri.len +
-               NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
-               ngx_strlen(sstr);
-
-        m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
-
-        ngx_snprintf(m3u8_url.data, m3u8_url.len, "https://%V%V?%s=%s",
-                    &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
-
-    } else
+        if (r->connection->ssl) {
+            scheme = https;
+        } else
 #endif
-    {
-        m3u8_url.len = ngx_strlen("http://") +
-               host.len +
-               uri.len +
-               NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
-               ngx_strlen(sstr);
-
-        m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
-
-        ngx_snprintf(m3u8_url.data, m3u8_url.len, "http://%V%V?%s=%s",
-                    &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+        {
+            scheme = http;
+        }
     }
+
+    m3u8_url.len = scheme.len + ngx_strlen("://") +
+            host.len +
+            uri.len +
+            NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
+            ngx_strlen(sstr);
+
+    m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
+
+    ngx_snprintf(m3u8_url.data, m3u8_url.len, "%V://%V%V?%s=%s",
+                &scheme, &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
 
     m3u8 = ngx_create_temp_buf(r->connection->pool, 64 * 1024);
     m3u8->memory = 1;
@@ -386,6 +385,9 @@ ngx_hls_http_redirect_handler(ngx_http_request_t *r,
     ngx_str_t                            location = ngx_string("");
     ngx_str_t                            uri;
     ngx_str_t                            uri_tail;
+    ngx_str_t                            scheme = ngx_string("");
+    ngx_str_t                            http = ngx_string("http");
+    ngx_str_t                            https = ngx_string("https");
 
     host = r->headers_in.host->value;
 
@@ -419,32 +421,28 @@ ngx_hls_http_redirect_handler(ngx_http_request_t *r,
         ngx_snprintf(uri.data, uri.len, "%V%V", &location, &uri_tail);
     }
 
-    #if (NGX_HTTP_SSL)
+    ngx_http_arg(r, (u_char*)"scheme", 6, &scheme);
+    if (scheme.len == 0) {
+#if (NGX_HTTP_SSL)
         if (r->connection->ssl) {
-            m3u8_url.len = ngx_strlen("https://") +
-            host.len +
-            uri.len +
-            NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
-            ngx_strlen(sstr);
-
-            m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
-
-            ngx_snprintf(m3u8_url.data, m3u8_url.len, "https://%V%V?%s=%s",
-                        &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+            scheme = https;
         } else
-    #endif
+#endif
         {
-            m3u8_url.len = ngx_strlen("http://") +
+            scheme = http;
+        }
+    }
+
+    m3u8_url.len = scheme.len + ngx_strlen("://") +
             host.len +
             uri.len +
             NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
             ngx_strlen(sstr);
 
-            m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
+    m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
 
-            ngx_snprintf(m3u8_url.data, m3u8_url.len, "http://%V%V?%s=%s",
-                        &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
-        }
+    ngx_snprintf(m3u8_url.data, m3u8_url.len, "%V://%V%V?%s=%s",
+                &scheme, &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
 
     ngx_http_set_header_out(r, &ngx_302_headers[0].key, &m3u8_url);
 
@@ -1089,6 +1087,10 @@ ngx_hls_http_handler(ngx_http_request_t *r)
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
             "hls-http: live_handler| donnot support the method");
         return NGX_HTTP_NOT_ALLOWED;
+    }
+
+    if (ngx_rtmp_core_main_conf->fast_reload && (ngx_exiting || ngx_terminate)) {
+        return NGX_DECLINED;
     }
 
     if (r->uri.len < 4) {

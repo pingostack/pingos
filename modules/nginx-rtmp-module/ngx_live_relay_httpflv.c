@@ -494,6 +494,13 @@ ngx_live_relay_httpflv_recv(void *request, ngx_http_request_t *hcr)
             hcr->connection->log->handler);
     s->log->connection = s->connection->number;
 
+    if (ngx_rtmp_core_main_conf->fast_reload && (ngx_exiting || ngx_terminate)) {
+        ngx_live_relay_httpflv_error(s, NGX_LIVE_PROCESS_EXIT);
+        s->finalize_reason = NGX_LIVE_PROCESS_EXIT;
+        ngx_http_client_finalize_request(hcr, 1);
+        return;
+    }
+
     if (status_code != NGX_HTTP_OK) {
         ngx_live_relay_httpflv_error(s, status_code);
         s->finalize_reason = NGX_LIVE_FLV_RECV_ERR;

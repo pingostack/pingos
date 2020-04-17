@@ -56,6 +56,7 @@ char *ngx_live_err[] = {
     "notify_relay_err",
     "notify_para_err",
     "relay_close",
+    "process_exit",
 };
 
 

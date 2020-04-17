@@ -259,6 +259,7 @@ typedef struct ngx_rtmp_addr_conf_s ngx_rtmp_addr_conf_t;
 #define NGX_LIVE_OCLP_RELAY_ERR     13
 #define NGX_LIVE_OCLP_PARA_ERR      14
 #define NGX_LIVE_RELAY_CLOSE        15
+#define NGX_LIVE_PROCESS_EXIT       16
 
 struct ngx_rtmp_session_s {
     ngx_atomic_uint_t       number;
@@ -518,6 +519,8 @@ typedef struct {
 
 
 typedef struct {
+    ngx_flag_t              fast_reload;
+
     ngx_array_t             servers;    /* ngx_rtmp_core_srv_conf_t */
 
     ngx_array_t             events[NGX_RTMP_MAX_EVENT];

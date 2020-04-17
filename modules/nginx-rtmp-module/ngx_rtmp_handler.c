@@ -217,6 +217,12 @@ ngx_rtmp_recv(ngx_event_t *rev)
         return;
     }
 
+    if (ngx_rtmp_core_main_conf->fast_reload && (ngx_exiting || ngx_terminate)) {
+        s->finalize_reason = NGX_LIVE_PROCESS_EXIT;
+        ngx_rtmp_finalize_session(s);
+        return;
+    }
+
     for( ;; ) {
 
         st = &s->in_streams[s->in_csid];
@@ -695,6 +701,12 @@ ngx_rtmp_send(ngx_event_t *wev)
 
     if (s->prepare_handler == NULL) {
         s->prepare_handler = ngx_rtmp_prepare_out_chain;
+    }
+
+    if (ngx_rtmp_core_main_conf->fast_reload && (ngx_exiting || ngx_terminate)) {
+        s->finalize_reason = NGX_LIVE_PROCESS_EXIT;
+        ngx_rtmp_finalize_session(s);
+        return;
     }
 
     if (ngx_rtmp_prepare_merge_frame(s) == NGX_ERROR) {

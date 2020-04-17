@@ -66,6 +66,13 @@ static ngx_command_t  ngx_rtmp_core_commands[] = {
       offsetof(ngx_rtmp_core_main_conf_t, server_names_hash_bucket_size),
       NULL },
 
+    { ngx_string("fast_reload"),
+      NGX_RTMP_MAIN_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_flag_slot,
+      NGX_RTMP_MAIN_CONF_OFFSET,
+      offsetof(ngx_rtmp_core_main_conf_t, fast_reload),
+      NULL },
+
     { ngx_string("server"),
       NGX_RTMP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_NOARGS,
       ngx_rtmp_core_server,
@@ -300,6 +307,7 @@ ngx_rtmp_core_create_main_conf(ngx_conf_t *cf)
 
     cmcf->server_names_hash_max_size = NGX_CONF_UNSET_UINT;
     cmcf->server_names_hash_bucket_size = NGX_CONF_UNSET_UINT;
+    cmcf->fast_reload = NGX_CONF_UNSET;
     cmcf->variables_hash_max_size = 1024;
     cmcf->variables_hash_bucket_size = 64;
 
@@ -317,6 +325,7 @@ ngx_rtmp_core_init_main_conf(ngx_conf_t *cf, void *conf)
     ngx_conf_init_uint_value(cmcf->server_names_hash_max_size, 512);
     ngx_conf_init_uint_value(cmcf->server_names_hash_bucket_size,
                              ngx_cacheline_size);
+    ngx_conf_init_value(cmcf->fast_reload, 0);
 
     return NGX_CONF_OK;
 }
