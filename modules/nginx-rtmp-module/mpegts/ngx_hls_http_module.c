@@ -290,6 +290,7 @@ ngx_hls_http_master_m3u8_handler(ngx_http_request_t *r,
     ngx_str_t                            scheme = ngx_string("");
     ngx_str_t                            http = ngx_string("http");
     ngx_str_t                            https = ngx_string("https");
+    u_char                              *p;
 
     host = r->headers_in.host->value;
 
@@ -341,10 +342,18 @@ ngx_hls_http_master_m3u8_handler(ngx_http_request_t *r,
             NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
             ngx_strlen(sstr);
 
+    if (r->args.len > 0) {
+        m3u8_url.len += 1 + r->args.len;
+    }
+
     m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
 
-    ngx_snprintf(m3u8_url.data, m3u8_url.len, "%V://%V%V?%s=%s",
+    p = ngx_snprintf(m3u8_url.data, m3u8_url.len, "%V://%V%V?%s=%s",
                 &scheme, &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+
+    if (r->args.len > 0) {
+        ngx_slprintf(p, m3u8_url.data + m3u8_url.len, "&%V", &r->args);
+    }
 
     m3u8 = ngx_create_temp_buf(r->connection->pool, 64 * 1024);
     m3u8->memory = 1;
@@ -388,6 +397,7 @@ ngx_hls_http_redirect_handler(ngx_http_request_t *r,
     ngx_str_t                            scheme = ngx_string("");
     ngx_str_t                            http = ngx_string("http");
     ngx_str_t                            https = ngx_string("https");
+    u_char                              *p;
 
     host = r->headers_in.host->value;
 
@@ -439,10 +449,18 @@ ngx_hls_http_redirect_handler(ngx_http_request_t *r,
             NGX_HLS_LIVE_ARG_SESSION_LENGTH + 2 +
             ngx_strlen(sstr);
 
+    if (r->args.len > 0) {
+        m3u8_url.len += 1 + r->args.len;
+    }
+
     m3u8_url.data = ngx_pcalloc(r->connection->pool, m3u8_url.len);
 
-    ngx_snprintf(m3u8_url.data, m3u8_url.len, "%V://%V%V?%s=%s",
+    p = ngx_snprintf(m3u8_url.data, m3u8_url.len, "%V://%V%V?%s=%s",
                 &scheme, &host, &uri, NGX_HLS_LIVE_ARG_SESSION, sstr);
+
+    if (r->args.len > 0) {
+        ngx_slprintf(p, m3u8_url.data + m3u8_url.len, "&%V", &r->args);
+    }
 
     ngx_http_set_header_out(r, &ngx_302_headers[0].key, &m3u8_url);
 
