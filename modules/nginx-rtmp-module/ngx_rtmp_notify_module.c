@@ -1044,7 +1044,7 @@ error:
     if (octx->type == NGX_RTMP_OCLP_PUBLISH) {
         ngx_rtmp_send_status(s, "NetStream.Publish.Forbidden", "status",
                 "Publish stream Forbidden");
-    } else {
+    } else if (s->live_type == NGX_RTMP_LIVE) {
         s->status = 403;
         ngx_rtmp_send_status(s, "NetStream.Play.Forbidden", "status",
                 "Play stream Forbidden");
