@@ -159,6 +159,8 @@ ngx_rtmp_free_merge_frame(ngx_rtmp_session_t *s)
             s->prepare_frame[n] = NULL;
         }
     }
+
+    s->nframe = 0;
 }
 
 void

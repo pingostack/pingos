@@ -288,10 +288,12 @@ ngx_rtmp_close_session(ngx_rtmp_session_t *s)
 
     if (s->in_old_pool) {
         NGX_DESTROY_POOL(s->in_old_pool);
+        s->in_old_pool = NULL;
     }
 
     if (s->in_pool) {
         NGX_DESTROY_POOL(s->in_pool);
+        s->in_pool = NULL;
     }
 
     if (s->live_type == NGX_HTTP_FLV_LIVE) {
@@ -314,7 +316,10 @@ ngx_rtmp_close_session(ngx_rtmp_session_t *s)
         }
     }
 
-    NGX_DESTROY_POOL(s->pool);
+    if (s->pool) {
+        NGX_DESTROY_POOL(s->pool);
+        s->pool = NULL;
+    }
 }
 
 
@@ -391,23 +396,17 @@ ngx_rtmp_finalize_session(ngx_rtmp_session_t *s)
     ngx_event_t        *e;
     ngx_connection_t   *c;
 
+    ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize session");
+
     if (s->live_type == NGX_HLS_LIVE) {
         ngx_rtmp_finalize_fake_session(s);
         return;
     }
 
-    if (s->destroyed) {
-        return;
-    }
-
-    s->destroyed = 1;
-
     c = s->connection;
     if (c && c->destroyed) {
         return;
     }
-
-    ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize session");
 
     if (s->live_type != NGX_RTMP_LIVE) {
         e = &s->close;
@@ -438,12 +437,6 @@ void
 ngx_rtmp_finalize_fake_session(ngx_rtmp_session_t *s)
 {
     ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize fake session");
-
-    if (s->destroyed) {
-        return;
-    }
-
-    s->destroyed = 1;
 
     ngx_rtmp_fire_event(s, NGX_RTMP_DISCONNECT, NULL, NULL);
 

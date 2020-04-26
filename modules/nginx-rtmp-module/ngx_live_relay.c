@@ -297,9 +297,7 @@ ngx_live_relay_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
                 }
             }
         }
-    }
-
-    if (!s->publishing) {
+    } else {
         rctx = ngx_rtmp_get_module_ctx(s, ngx_live_relay_module);
         if (rctx) {
             // push close will trigger relay push reconnect in relay modules
