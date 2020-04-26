@@ -248,11 +248,16 @@ static void
 ngx_mpegts_http_parse_url(ngx_http_request_t *r, ngx_str_t *app,
         ngx_str_t *name)
 {
-    u_char                             *p, *end;
+    u_char                             *p, *end, *pos;
 
     p = r->uri.data + 1; /* skip '/' */
     end = r->uri.data + r->uri.len;
     app->data = p;
+
+    pos = (u_char *) ngx_strnstr(p, ".ts", end - p);
+    if (pos) {
+        end = pos;
+    }
 
     p = (u_char *) ngx_strnstr(p, "/", end - p);
     while (p) {
@@ -295,6 +300,8 @@ ngx_mpegts_http_parse(ngx_http_request_t *r, ngx_rtmp_session_t *s,
     if (hflcf->app.len) {
         app = hflcf->app;
     }
+
+    ngx_http_arg(r, (u_char *) "app", 3, &app);
 
     s->app = app;
 

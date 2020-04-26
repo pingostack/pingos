@@ -384,11 +384,16 @@ static void
 ngx_http_flv_live_parse_url(ngx_http_request_t *r, ngx_str_t *app,
         ngx_str_t *name)
 {
-    u_char                             *p, *end;
+    u_char                             *p, *end, *pos;
 
     p = r->uri.data + 1; /* skip '/' */
     end = r->uri.data + r->uri.len;
     app->data = p;
+
+    pos = ngx_strnstr(p, ".flv", end - p);
+    if (pos) {
+        end = pos;
+    }
 
     p = (u_char *) ngx_strnstr(p, "/", end - p);
     while (p) {
@@ -432,11 +437,13 @@ ngx_http_flv_live_parse(ngx_http_request_t *r, ngx_rtmp_session_t *s,
         app = hflcf->app;
     }
 
-    s->app = app;
-
     if (ngx_http_arg(r, (u_char *) "flashver", 8, &s->flashver) != NGX_OK) {
         s->flashver = hflcf->flashver;
     }
+
+    ngx_http_arg(r, (u_char *) "app", 3, &app);
+
+    s->app = app;
 
     /* tc_url */
 #if (NGX_HTTP_SSL)
