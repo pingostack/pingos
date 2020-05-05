@@ -139,6 +139,7 @@ typedef struct {
 } ngx_rtmp_notify_srv_conf_t;
 
 typedef struct {
+    ngx_flag_t                  ignore_invalid_notify;
     ngx_flag_t                  meta_once;
     ngx_uint_t                  meta_type;
     ngx_array_t                 events[NGX_RTMP_OCLP_APP_MAX];
@@ -159,6 +160,13 @@ typedef struct {
 
 
 static ngx_command_t ngx_rtmp_notify_commands[] = {
+
+    { ngx_string("ignore_invalid_notify"),
+      NGX_RTMP_MAIN_CONF|NGX_RTMP_SRV_CONF|NGX_RTMP_APP_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_flag_slot,
+      NGX_RTMP_APP_CONF_OFFSET,
+      offsetof(ngx_rtmp_notify_app_conf_t, ignore_invalid_notify),
+      NULL },
 
     { ngx_string("on_proc"),
       NGX_RTMP_MAIN_CONF|NGX_CONF_1MORE,
@@ -406,6 +414,7 @@ ngx_rtmp_notify_create_app_conf(ngx_conf_t *cf)
 
     oacf->meta_once = NGX_CONF_UNSET;
     oacf->meta_type = NGX_CONF_UNSET_UINT;
+    oacf->ignore_invalid_notify = NGX_CONF_UNSET;
 
     return oacf;
 }
@@ -419,6 +428,8 @@ ngx_rtmp_notify_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->meta_once, prev->meta_once, 1);
     ngx_conf_merge_uint_value(conf->meta_type, prev->meta_type,
                               NGX_RTMP_OCLP_META_VIDEO);
+    ngx_conf_merge_value(conf->ignore_invalid_notify,
+        prev->ignore_invalid_notify, 1);
 
     return NGX_CONF_OK;
 }
@@ -1004,12 +1015,15 @@ ngx_rtmp_notify_common_done(ngx_rtmp_session_t *s, ngx_netcall_ctx_t *nctx)
 static void
 ngx_rtmp_notify_pnotify_start_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
 {
-    ngx_rtmp_session_t         *s;
+    ngx_rtmp_session_t           *s;
     ngx_rtmp_notify_ctx_t        *octx;
+    ngx_rtmp_notify_app_conf_t   *oacf;
 
     s = nctx->data;
 
     octx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_notify_module);
+
+    oacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_notify_module);
 
     s->notify_status = code;
 
@@ -1018,7 +1032,7 @@ ngx_rtmp_notify_pnotify_start_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
                 "notify %s start notify error: %i",
                ngx_rtmp_notify_app_type[nctx->type], code);
 
-        if (code != -1) {
+        if (code != -1 || !oacf->ignore_invalid_notify) {
             goto error;
         }
 
