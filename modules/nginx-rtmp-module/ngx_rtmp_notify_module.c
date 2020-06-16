@@ -921,9 +921,11 @@ ngx_rtmp_notify_common_url(ngx_str_t *url, ngx_rtmp_session_t *s,
 
     if (event->args.len) {
         ngx_rtmp_fetch_variable(s, s->pool, &event->args, &args);
-        p = ngx_snprintf(buf, len, "&%V", &args);
-        len -= p - buf;
-        buf = p;
+        if (args.len > 0) {
+            p = ngx_snprintf(buf, len, "&%V", &args);
+            len -= p - buf;
+            buf = p;
+        }
     }
 
     url->len = p - url->data;
