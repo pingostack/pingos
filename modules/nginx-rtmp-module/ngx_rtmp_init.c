@@ -318,7 +318,6 @@ ngx_rtmp_close_session(ngx_rtmp_session_t *s)
 
     if (s->pool) {
         NGX_DESTROY_POOL(s->pool);
-        s->pool = NULL;
     }
 }
 
