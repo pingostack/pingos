@@ -878,7 +878,7 @@ ngx_event_multiport_set_port(ngx_cycle_t *cycle,
 }
 
 static ngx_int_t
-ngx_event_multiport_enable_accept_event(ngx_listening_t *ls)
+ngx_event_multiport_enable_accept_event(ngx_cycle_t *cycle, ngx_listening_t *ls)
 {
     ngx_connection_t   *c;
     ngx_event_t        *rev;
@@ -928,7 +928,7 @@ ngx_event_multiport_enable_accept_event(ngx_listening_t *ls)
         rev->handler = ngx_event_accept;
 
         if (ngx_use_accept_mutex) {
-            continue;
+            return NGX_OK;
         }
 
         if (ngx_add_event(rev, NGX_READ_EVENT, 0) == NGX_ERROR) {
@@ -982,7 +982,7 @@ ngx_event_multiport_process_init(ngx_cycle_t *cycle)
         }
 
         /* enable accept */
-        if (ngx_event_multiport_enable_accept_event(&mls[i].listening)
+        if (ngx_event_multiport_enable_accept_event(cycle, &mls[i].listening)
                 != NGX_OK)
         {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_socket_errno,

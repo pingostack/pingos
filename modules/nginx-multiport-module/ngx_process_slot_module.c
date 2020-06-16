@@ -108,6 +108,10 @@ ngx_process_slot_process_init(ngx_cycle_t *cycle)
     ngx_process_slot_conf_t    *pscf;
     ngx_process_slot_ctx_t     *ctx;
 
+    if (ngx_process != NGX_PROCESS_WORKER) {
+        return NGX_OK;
+    }
+
     pscf = (ngx_process_slot_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                     ngx_process_slot_module);
     ctx = pscf->ctx;
@@ -128,6 +132,10 @@ ngx_process_slot_process_exit(ngx_cycle_t *cycle)
 {
     ngx_process_slot_conf_t    *pscf;
     ngx_process_slot_ctx_t     *ctx;
+
+    if (ngx_process != NGX_PROCESS_WORKER) {
+        return;
+    }
 
     pscf = (ngx_process_slot_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                     ngx_process_slot_module);
