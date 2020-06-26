@@ -4,3 +4,4 @@ openresty/
 .git/
 *.code-workspace
 .DS_Store
+h5player/

@@ -237,7 +237,12 @@ then
 
         if [ ! -f $SERVER_ROOT"/conf/nginx.conf" ]
         then
-            cp ./resource/conf-template/nginx.conf $SERVER_ROOT"/conf/nginx.conf"
+            if [ "$CMD" == "brew" ]
+            then
+                cp ./resource/conf-template/nginx-macos.conf $SERVER_ROOT"/conf/nginx.conf"
+            else
+                cp ./resource/conf-template/nginx.conf $SERVER_ROOT"/conf/nginx.conf"
+            fi
         fi
 
         if [ ! -f $WWW_ROOT"/stat.xsl" ]
