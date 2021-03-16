@@ -32,6 +32,25 @@ static ngx_live_pull_pt             next_pull;
 static ngx_live_push_close_pt       next_push_close;
 static ngx_live_pull_close_pt       next_pull_close;
 
+typedef struct {
+    ngx_str_t                   url;
+    ngx_str_t                   args;
+    ngx_str_t                   groupid;
+    ngx_uint_t                  stage;
+    ngx_msec_t                  timeout;
+    ngx_msec_t                  update;
+} ngx_rtmp_notify_event_t;
+
+
+static void
+ngx_rtmp_notify_init_master_url(ngx_str_t *url, ngx_pool_t *pool,
+    ngx_rtmp_notify_event_t *event, int stage);
+static void
+ngx_rtmp_notify_init_master_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code);
+static void
+ngx_rtmp_notify_master_update_create(ngx_netcall_ctx_t *nctx);
+static void
+ngx_rtmp_notify_common_timer(ngx_event_t *ev);
 
 static ngx_int_t ngx_rtmp_notify_init_process(ngx_cycle_t *cycle);
 
@@ -59,6 +78,7 @@ static char *ngx_rtmp_notify_on_app_event(ngx_conf_t *cf, ngx_command_t *cmd,
 
 enum {
     NGX_RTMP_OCLP_PROC,         /* only notify */
+    NGX_RTMP_OCLP_MASTER,
     NGX_RTMP_OCLP_MAIN_MAX
 };
 
@@ -122,15 +142,6 @@ static ngx_conf_enum_t ngx_rtmp_notify_meta_type[] = {
 };
 
 typedef struct {
-    ngx_str_t                   url;
-    ngx_str_t                   args;
-    ngx_str_t                   groupid;
-    ngx_uint_t                  stage;
-    ngx_msec_t                  timeout;
-    ngx_msec_t                  update;
-} ngx_rtmp_notify_event_t;
-
-typedef struct {
     ngx_rtmp_notify_event_t       events[NGX_RTMP_OCLP_MAIN_MAX];
 } ngx_rtmp_notify_main_conf_t;
 
@@ -166,6 +177,13 @@ static ngx_command_t ngx_rtmp_notify_commands[] = {
       ngx_conf_set_flag_slot,
       NGX_RTMP_APP_CONF_OFFSET,
       offsetof(ngx_rtmp_notify_app_conf_t, ignore_invalid_notify),
+      NULL },
+
+    { ngx_string("on_master"),
+      NGX_RTMP_MAIN_CONF|NGX_CONF_1MORE,
+      ngx_rtmp_notify_on_main_event,
+      NGX_RTMP_MAIN_CONF_OFFSET,
+      0,
       NULL },
 
     { ngx_string("on_proc"),
@@ -557,11 +575,11 @@ ngx_rtmp_notify_create_event(ngx_conf_t *cf, ngx_rtmp_notify_event_t *event,
 
         event->url.len = values[i].len;
         event->url.data = values[i].data;
-        if (values[i].data[values[i].len - 1] != '/') {
-            event->url.data = ngx_pcalloc(cf->pool, values[i].len + 1);
-            event->url.len = values[i].len + 1;
-            ngx_snprintf(event->url.data, event->url.len, "%V/", &values[i]);
-        }
+        // if (values[i].data[values[i].len - 1] != '/') {
+        //     event->url.data = ngx_pcalloc(cf->pool, values[i].len + 1);
+        //     event->url.len = values[i].len + 1;
+        //     ngx_snprintf(event->url.data, event->url.len, "%V/", &values[i]);
+        // }
 
         if (ngx_parse_request_url(&ru, &event->url) != NGX_OK) {
             ngx_conf_log_error(NGX_LOG_WARN, cf, 0, "request url format error");
@@ -608,7 +626,14 @@ ngx_rtmp_notify_on_main_event(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         n = NGX_RTMP_OCLP_PROC;
         break;
     case sizeof("oclp_proc") - 1:
-        n = NGX_RTMP_OCLP_PROC;
+        if (name->data[1] == 'c') {
+            n = NGX_RTMP_OCLP_PROC;
+        } else {
+            n = NGX_RTMP_OCLP_MASTER;
+        }
+        break;
+    case sizeof("oclp_master") - 1:
+        n = NGX_RTMP_OCLP_MASTER;
         break;
     }
 
@@ -817,7 +842,7 @@ ngx_rtmp_notify_init_process_create(ngx_event_t *ev)
 }
 
 static ngx_int_t
-ngx_rtmp_notify_init_process(ngx_cycle_t *cycle)
+ngx_rtmp_notify_init_process_netcall(ngx_cycle_t *cycle)
 {
     ngx_rtmp_notify_main_conf_t  *omcf;
     ngx_rtmp_notify_event_t      *event;
@@ -862,6 +887,187 @@ ngx_rtmp_notify_init_process(ngx_cycle_t *cycle)
     ngx_post_event(ev, &ngx_rtmp_init_queue);
 
     return NGX_OK;
+}
+
+static void
+ngx_rtmp_notify_master_create(ngx_event_t *ev)
+{
+    ngx_netcall_ctx_t          *nctx;
+
+    nctx = ev->data;
+
+    ngx_log_error(NGX_LOG_INFO, ngx_cycle->log, 0, "notify init master create");
+
+    ngx_netcall_create(nctx, ngx_cycle->log);
+}
+
+static ngx_int_t
+ngx_rtmp_notify_init_master_netcall(ngx_cycle_t *cycle)
+{
+    ngx_rtmp_notify_main_conf_t  *omcf;
+    ngx_rtmp_notify_event_t      *event;
+    ngx_rtmp_conf_ctx_t        *ctx;
+    ngx_netcall_ctx_t          *nctx;
+    ngx_event_t                *ev;
+
+    if (ngx_process != NGX_PROCESS_WORKER &&
+        ngx_process != NGX_PROCESS_SINGLE)
+    {
+        return NGX_OK;
+    }
+
+    if (ngx_rtmp_core_main_conf == NULL) {
+        return NGX_OK;
+    }
+
+    ctx = (ngx_rtmp_conf_ctx_t *) ngx_get_conf(cycle->conf_ctx,
+                                               ngx_rtmp_module);
+    omcf = (ngx_rtmp_notify_main_conf_t *)
+            ctx->main_conf[ngx_rtmp_notify_module.ctx_index];
+
+    if (omcf->events[NGX_RTMP_OCLP_MASTER].url.len == 0) {
+        return NGX_OK;
+    }
+
+    event = &omcf->events[NGX_RTMP_OCLP_MASTER];
+
+    nctx = ngx_netcall_create_ctx(NGX_RTMP_OCLP_MASTER, &event->groupid,
+            event->stage, event->timeout, event->update, 0);
+    if (nctx == NULL) {
+        return NGX_ERROR;
+    }
+
+    ngx_rtmp_notify_init_master_url(&nctx->url, nctx->pool, event,
+        NGX_RTMP_OCLP_START);
+    nctx->handler = ngx_rtmp_notify_init_master_handle;
+    nctx->data = omcf;
+
+    ev = &nctx->ev;
+    ev->handler = ngx_rtmp_notify_master_create;
+
+    ngx_post_event(ev, &ngx_rtmp_init_queue);
+
+    return NGX_OK;
+}
+
+
+static void
+ngx_rtmp_notify_init_master_url(ngx_str_t *url, ngx_pool_t *pool,
+    ngx_rtmp_notify_event_t *event, int stage)
+{
+    size_t                      len;
+    u_char                     *p;
+
+    len = event->url.len + sizeof("?call=init_master&act=") - 1
+        + ngx_strlen(ngx_rtmp_notify_stage[stage]);
+    if (event->args.len) {
+        len += event->args.len + 1;
+    }
+
+    url->data = ngx_pcalloc(pool, len);
+    if (url->data == NULL) {
+        return;
+    }
+
+    p = url->data;
+    p = ngx_snprintf(p, len, "%V?call=init_master&act=%s",
+            &event->url, ngx_rtmp_notify_stage[stage]);
+    if (event->args.len) {
+        p = ngx_snprintf(p, len - (p - url->data), "&%V", &event->args);
+    }
+    url->len = p - url->data;
+}
+
+static void
+ngx_rtmp_notify_init_master_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
+{
+    if (code != NGX_HTTP_OK) {
+        ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
+                "notify init master notify error: %i", code);
+    }
+
+    ngx_rtmp_notify_master_update_create(nctx);
+
+    return;
+}
+
+static void
+ngx_rtmp_notify_master_update_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
+{
+    if (code != NGX_HTTP_OK) {
+        ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
+                "notify master notify error: %i", code);
+        //return;
+    }
+
+    ngx_rtmp_notify_master_update_create(nctx);
+
+    return;
+}
+
+static void
+ngx_rtmp_notify_master_update_create(ngx_netcall_ctx_t *nctx)
+{
+    ngx_rtmp_notify_main_conf_t  *omcf;
+    ngx_rtmp_notify_event_t      *event;
+    ngx_event_t                  *ev;
+
+    omcf = (ngx_rtmp_notify_main_conf_t *)
+            nctx->data;
+
+    if (omcf->events[NGX_RTMP_OCLP_MASTER].url.len == 0) {
+        return;
+    }
+
+    event = &omcf->events[NGX_RTMP_OCLP_MASTER];
+
+    if ((nctx->stage & NGX_RTMP_OCLP_UPDATE) == NGX_RTMP_OCLP_UPDATE) {
+
+        event += nctx->idx;
+
+        ngx_rtmp_notify_init_master_url(&nctx->url, nctx->pool, event,
+            NGX_RTMP_OCLP_UPDATE);
+        nctx->handler = ngx_rtmp_notify_master_update_handle;
+
+        ev = &nctx->ev;
+        ev->data = nctx;
+        ev->handler = ngx_rtmp_notify_common_timer;
+
+        ngx_add_timer(ev, nctx->update);
+    }
+}
+
+static ngx_int_t
+ngx_rtmp_notify_init_process(ngx_cycle_t *cycle)
+{
+    ngx_rtmp_notify_main_conf_t  *omcf;
+    ngx_rtmp_conf_ctx_t          *ctx;
+
+    if (ngx_process != NGX_PROCESS_WORKER &&
+        ngx_process != NGX_PROCESS_SINGLE)
+    {
+        return NGX_OK;
+    }
+
+    if (ngx_rtmp_core_main_conf == NULL) {
+        return NGX_OK;
+    }
+
+    ctx = (ngx_rtmp_conf_ctx_t *) ngx_get_conf(cycle->conf_ctx,
+                                               ngx_rtmp_module);
+    omcf = (ngx_rtmp_notify_main_conf_t *)
+            ctx->main_conf[ngx_rtmp_notify_module.ctx_index];
+
+    if (omcf->events[NGX_RTMP_OCLP_PROC].url.len != 0) {
+        ngx_rtmp_notify_init_process_netcall(cycle);
+    }
+
+    if (omcf->events[NGX_RTMP_OCLP_MASTER].url.len != 0) {
+        ngx_rtmp_notify_init_master_netcall(cycle);
+    }
+
+    return NGX_OK;
+
 }
 
 static void
