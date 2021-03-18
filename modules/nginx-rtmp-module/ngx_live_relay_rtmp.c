@@ -35,6 +35,12 @@ static ngx_rtmp_status_code_t ngx_rtmp_relay_status_error_code[] = {
     { NULL, 0, 0 }
 };
 
+static ngx_rtmp_status_code_t ngx_rtmp_relay_status_success_code[] = {
+    { "NetStream.Publish.Start",  200, 0 },
+    { "NetStream.Play.Start",     200, 0 },
+    { NULL, 0, 0 }
+};
+
 
 #define NGX_RTMP_RELAY_CONNECT_TRANS            1
 #define NGX_RTMP_RELAY_CREATE_STREAM_TRANS      2
@@ -437,6 +443,22 @@ ngx_live_relay_rtmp_status_error(ngx_rtmp_session_t *s, char *type, char *code,
 
     if (ngx_strcmp(type, "onStatus") == 0) {
         status = 1;
+        for (i = 0; ngx_rtmp_relay_status_success_code[i].code; ++i) {
+            if (ngx_strcmp(ngx_rtmp_relay_status_success_code[i].code, code)
+                    != 0)
+            {
+                continue;
+            }
+
+            ngx_log_error(NGX_LOG_INFO, s->log, 0,
+                    "relay transit, %s: level='%s' code='%s' description='%s'",
+                    type, level, code, desc);
+            if (s->publishing) {
+                return ngx_live_relay_publish_local(s);
+            } else {
+                return ngx_live_relay_play_local(s);
+            }
+        }
     }
 
     for (i = 0; ngx_rtmp_relay_status_error_code[i].code; ++i) {
@@ -543,18 +565,22 @@ ngx_live_relay_rtmp_on_result(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
                 if (ngx_live_relay_rtmp_send_publish(s) != NGX_OK) {
                     return NGX_ERROR;
                 }
-                return ngx_live_relay_play_local(s);
+//                return ngx_live_relay_play_local(s);
 
             } else {
                 if (ngx_live_relay_rtmp_send_play(s) != NGX_OK) {
                     return NGX_ERROR;
                 }
-                return ngx_live_relay_publish_local(s);
+//                return ngx_live_relay_publish_local(s);
             }
+
+            break;
 
         default:
             return NGX_OK;
     }
+
+    return NGX_OK;
 }
 
 

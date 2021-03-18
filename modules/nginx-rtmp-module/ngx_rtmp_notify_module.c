@@ -1006,6 +1006,19 @@ ngx_rtmp_notify_master_update_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
 }
 
 static void
+ngx_rtmp_notify_master_update_timer(ngx_event_t *ev)
+{
+    ngx_netcall_ctx_t          *nctx;
+
+    nctx = ev->data;
+
+    ngx_log_error(NGX_LOG_INFO, ev->log, 0, "notify master update create %V",
+        &nctx->url);
+
+    ngx_netcall_create(nctx, ev->log);
+}
+
+static void
 ngx_rtmp_notify_master_update_create(ngx_netcall_ctx_t *nctx)
 {
     ngx_rtmp_notify_main_conf_t  *omcf;
@@ -1031,7 +1044,7 @@ ngx_rtmp_notify_master_update_create(ngx_netcall_ctx_t *nctx)
 
         ev = &nctx->ev;
         ev->data = nctx;
-        ev->handler = ngx_rtmp_notify_common_timer;
+        ev->handler = ngx_rtmp_notify_master_update_timer;
 
         ngx_add_timer(ev, nctx->update);
     }
