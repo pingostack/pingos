@@ -2058,7 +2058,8 @@ ngx_rtmp_notify_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
 
         event = oacf->events[NGX_RTMP_OCLP_META].elts;
         for (i = 0; i < oacf->events[NGX_RTMP_OCLP_META].nelts; ++i, ++event) {
-            ngx_rtmp_notify_relay_start(s, event, NGX_RTMP_OCLP_META, 0);
+            // ngx_rtmp_notify_relay_start(s, event, NGX_RTMP_OCLP_META, 0);
+            ngx_rtmp_notify_pnotify_start(s, NGX_RTMP_OCLP_META);
         }
     }
 

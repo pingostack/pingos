@@ -12,45 +12,45 @@
 
 
 static ngx_int_t ngx_rtmp_variable_session_get_str(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_session_get_uint(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_session_get_int(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_session_get_msec(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 
 static ngx_int_t ngx_rtmp_variable_relay_get_str(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_relay_get_uint(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 
 static ngx_int_t ngx_rtmp_variable_finalize_reason(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_stage(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_remote_addr(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_remote_port(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_local_addr(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_local_port(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_nginx_version(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_pid(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_msec(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_time_iso8601(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_time_local(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_ngx_worker(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_rtmp_variable_argument(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data);
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 
 
 static ngx_rtmp_variable_t  ngx_rtmp_core_variables[] = {
@@ -224,7 +224,7 @@ extern char *ngx_live_err[];
 
 static ngx_int_t
 ngx_rtmp_variable_session_get_str(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_str_t                  *str;
 
@@ -240,7 +240,7 @@ ngx_rtmp_variable_session_get_str(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_session_get_uint(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_uint_t                 *ui;
 
@@ -262,7 +262,7 @@ ngx_rtmp_variable_session_get_uint(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_session_get_int(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_int_t                  *i;
 
@@ -284,7 +284,7 @@ ngx_rtmp_variable_session_get_int(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_session_get_msec(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_msec_t                 *m;
 
@@ -306,7 +306,7 @@ ngx_rtmp_variable_session_get_msec(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_relay_get_str(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_live_relay_ctx_t       *ctx;
     ngx_str_t                  *str;
@@ -330,7 +330,7 @@ ngx_rtmp_variable_relay_get_str(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_relay_get_uint(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_live_relay_ctx_t       *ctx;
     ngx_uint_t                 *ui;
@@ -360,7 +360,7 @@ ngx_rtmp_variable_relay_get_uint(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_finalize_reason(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     v->data = (u_char *) ngx_live_err[s->finalize_reason];
     v->len = ngx_strlen(v->data);
@@ -372,7 +372,7 @@ ngx_rtmp_variable_finalize_reason(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_stage(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     v->data = (u_char *) ngx_live_stage[s->stage];
     v->len = ngx_strlen(v->data);
@@ -384,7 +384,7 @@ ngx_rtmp_variable_stage(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_remote_addr(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_sockaddr_t              nsa;
     struct sockaddr            *sa;
@@ -421,7 +421,7 @@ ngx_rtmp_variable_remote_addr(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_remote_port(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_sockaddr_t              nsa;
     struct sockaddr            *sa;
@@ -465,7 +465,7 @@ ngx_rtmp_variable_remote_port(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_local_addr(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_sockaddr_t              nsa;
     struct sockaddr            *sa;
@@ -502,7 +502,7 @@ ngx_rtmp_variable_local_addr(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_local_port(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_sockaddr_t              nsa;
     struct sockaddr            *sa;
@@ -546,7 +546,7 @@ ngx_rtmp_variable_local_port(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_nginx_version(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     v->len = sizeof(NGINX_VERSION) - 1;
     v->valid = 1;
@@ -560,7 +560,7 @@ ngx_rtmp_variable_nginx_version(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_pid(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     if (v->data == NULL) {
         v->data = ngx_pnalloc(s->pool, NGX_INT64_LEN);
@@ -580,7 +580,7 @@ ngx_rtmp_variable_pid(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_msec(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_time_t                 *tp;
 
@@ -604,7 +604,7 @@ ngx_rtmp_variable_msec(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_time_iso8601(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     if (v->data == NULL) {
         v->data = ngx_pnalloc(s->pool, ngx_cached_http_log_iso8601.len);
@@ -627,7 +627,7 @@ ngx_rtmp_variable_time_iso8601(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_time_local(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     if (v->data == NULL) {
         v->data = ngx_pnalloc(s->pool, ngx_cached_http_log_time.len);
@@ -650,7 +650,7 @@ ngx_rtmp_variable_time_local(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_ngx_worker(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     if (v->data == NULL) {
         v->data = ngx_pnalloc(s->pool, NGX_INT64_LEN);
@@ -670,7 +670,7 @@ ngx_rtmp_variable_ngx_worker(ngx_rtmp_session_t *s,
 
 static ngx_int_t
 ngx_rtmp_variable_argument(ngx_rtmp_session_t *s,
-    ngx_http_variable_value_t *v, uintptr_t data)
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
 {
     ngx_str_t                  *name = (ngx_str_t *) data;
 
@@ -715,13 +715,15 @@ ngx_rtmp_add_prefix_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 
         v = &v[i];
 
-        if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE)) {
+        if (!(v->flags & NGX_RTMP_VAR_CHANGEABLE)) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "the duplicate \"%V\" variable", name);
             return NULL;
         }
 
-        v->flags &= flags | ~NGX_HTTP_VAR_WEAK;
+        if (!(flags & NGX_HTTP_VAR_WEAK)) {
+            v->flags &= ~NGX_HTTP_VAR_WEAK;
+        }
 
         return v;
     }
@@ -928,7 +930,7 @@ ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
         return NULL;
     }
 
-    if (flags & NGX_HTTP_VAR_PREFIX) {
+    if (flags & NGX_RTMP_VAR_PREFIX) {
         return ngx_rtmp_add_prefix_variable(cf, name, flags);
     }
 
@@ -944,13 +946,15 @@ ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 
         v = key[i].value;
 
-        if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE)) {
+        if (!(v->flags & NGX_RTMP_VAR_CHANGEABLE)) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "the duplicate \"%V\" variable", name);
             return NULL;
         }
 
-        v->flags &= flags | ~NGX_HTTP_VAR_WEAK;
+        if (!(flags & NGX_HTTP_VAR_WEAK)) {
+            v->flags &= ~NGX_HTTP_VAR_WEAK;
+        }
 
         return v;
     }
@@ -993,10 +997,9 @@ ngx_rtmp_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 ngx_int_t
 ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 {
-    ngx_uint_t                  i = 0, n;
-    ngx_rtmp_variable_t        *v, *av;
+    ngx_uint_t                  i;
+    ngx_rtmp_variable_t        *v;
     ngx_rtmp_core_main_conf_t  *cmcf;
-    ngx_hash_key_t             *key;
 
     if (name->len == 0) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -1007,7 +1010,6 @@ ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
     cmcf = ngx_rtmp_conf_get_module_main_conf(cf, ngx_rtmp_core_module);
 
     v = cmcf->variables.elts;
-    key = cmcf->variables_keys->keys.elts;
 
     if (v == NULL) {
         if (ngx_array_init(&cmcf->variables, cf->pool, 4,
@@ -1042,30 +1044,10 @@ ngx_rtmp_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 
     ngx_strlow(v->name.data, name->data, name->len);
 
-    for (n = 0; n < cmcf->variables_keys->keys.nelts; n++) {
-        av = key[n].value;
-        if (av->get_handler
-            && v->name.len == key[n].key.len
-            && ngx_strncmp(v->name.data, key[n].key.data, v->name.len) == 0)
-        {
-            v->get_handler = av->get_handler;
-            v->data = av->data;
-            av->flags= NGX_RTMP_VAR_INDEXED;
-            v->flags = av->flags;
-            av->index = i;
-
-            goto next;
-        }
-    }
-
-    ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                "variables: get_variable_index| unknown \"%V\" variable",
-                &v->name);
-
-    return NGX_ERROR;
-
-next:
     v->set_handler = NULL;
+    v->get_handler = NULL;
+    v->data = 0;
+    v->flags = 0;
     v->index = cmcf->variables.nelts - 1;
 
     return v->index;
@@ -1092,7 +1074,7 @@ ngx_rtmp_get_indexed_variable(ngx_rtmp_session_t *s, ngx_uint_t index)
 
     v = cmcf->variables.elts;
 
-    if (ngx_rtmp_variable_depth == 0) {
+    if (ngx_rtmp_variable_depth == 0 || !v[index].get_handler) {
         ngx_log_error(NGX_LOG_ERR, s->log, 0,
                       "cycle while evaluating variable \"%V\"",
                       &v[index].name);
@@ -1106,7 +1088,7 @@ ngx_rtmp_get_indexed_variable(ngx_rtmp_session_t *s, ngx_uint_t index)
     {
         ngx_rtmp_variable_depth++;
 
-        if (v[index].flags & NGX_HTTP_VAR_NOCACHEABLE) {
+        if (v[index].flags & NGX_RTMP_VAR_NOCACHEABLE) {
             s->variables[index].no_cacheable = 1;
         }
 
@@ -1156,7 +1138,7 @@ ngx_rtmp_get_variable(ngx_rtmp_session_t *s, ngx_str_t *name, ngx_uint_t key)
     v = ngx_hash_find(&cmcf->variables_hash, key, name->data, name->len);
 
     if (v) {
-        if (v->flags & NGX_HTTP_VAR_INDEXED) {
+        if (v->flags & NGX_RTMP_VAR_INDEXED) {
             return ngx_rtmp_get_flushed_variable(s, v->index);
         }
 
@@ -1337,7 +1319,7 @@ ngx_rtmp_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
         name.data = &p[2];
         name.len = ngx_strlen(name.data);
 
-        v = ngx_rtmp_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE);
+        v = ngx_rtmp_add_variable(cf, &name, NGX_RTMP_VAR_CHANGEABLE);
         if (v == NULL) {
             return NULL;
         }
@@ -1500,13 +1482,13 @@ ngx_rtmp_variables_init_vars(ngx_conf_t *cf)
                 v[i].get_handler = av->get_handler;
                 v[i].data = av->data;
 
-                av->flags |= NGX_HTTP_VAR_INDEXED;
+                av->flags |= NGX_RTMP_VAR_INDEXED;
                 v[i].flags = av->flags;
 
                 av->index = i;
 
                 if (av->get_handler == NULL
-                    || (av->flags & NGX_HTTP_VAR_WEAK))
+                    || (av->flags & NGX_RTMP_VAR_WEAK))
                 {
                     break;
                 }
@@ -1551,7 +1533,7 @@ ngx_rtmp_variables_init_vars(ngx_conf_t *cf)
     for (n = 0; n < cmcf->variables_keys->keys.nelts; n++) {
         av = key[n].value;
 
-        if (av->flags & NGX_HTTP_VAR_NOHASH) {
+        if (av->flags & NGX_RTMP_VAR_NOHASH) {
             key[n].key.data = NULL;
         }
     }

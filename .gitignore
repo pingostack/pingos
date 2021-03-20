@@ -1,6 +1,6 @@
 docker/*.tar*
-nginx/
 openresty/
+nginx/
 .git/
 *.code-workspace
 .DS_Store

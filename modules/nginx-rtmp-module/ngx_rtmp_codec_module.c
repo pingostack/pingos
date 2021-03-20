@@ -11,16 +11,16 @@
 #include "ngx_rtmp_cmd_module.h"
 #include "ngx_rtmp_bitop.h"
 #include "ngx_rbuf.h"
-
+#include "ngx_rtmp_variables.h"
 
 #define NGX_RTMP_CODEC_META_OFF     0
 #define NGX_RTMP_CODEC_META_ON      1
 #define NGX_RTMP_CODEC_META_COPY    2
 
-
 static void * ngx_rtmp_codec_create_app_conf(ngx_conf_t *cf);
 static char * ngx_rtmp_codec_merge_app_conf(ngx_conf_t *cf,
        void *parent, void *child);
+static ngx_int_t ngx_rtmp_codec_add_variables(ngx_conf_t *cf);
 static ngx_int_t ngx_rtmp_codec_postconfiguration(ngx_conf_t *cf);
 static ngx_int_t ngx_rtmp_codec_reconstruct_meta(ngx_rtmp_session_t *s);
 static ngx_int_t ngx_rtmp_codec_copy_meta(ngx_rtmp_session_t *s,
@@ -38,6 +38,12 @@ static void ngx_rtmp_codec_dump_header(ngx_rtmp_session_t *s, const char *type,
        ngx_chain_t *in);
 #endif
 
+static ngx_int_t
+ngx_rtmp_codec_variable_metadata(ngx_rtmp_session_t *s,
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
+static ngx_int_t
+ngx_rtmp_codec_variable_metadata_arg(ngx_rtmp_session_t *s,
+    ngx_rtmp_variable_value_t *v, uintptr_t data);
 
 typedef struct {
     ngx_uint_t                      meta;
@@ -66,7 +72,7 @@ static ngx_command_t  ngx_rtmp_codec_commands[] = {
 
 
 static ngx_rtmp_module_t  ngx_rtmp_codec_module_ctx = {
-    NULL,                                   /* preconfiguration */
+    ngx_rtmp_codec_add_variables,           /* preconfiguration */
     ngx_rtmp_codec_postconfiguration,       /* postconfiguration */
     NULL,                                   /* create main configuration */
     NULL,                                   /* init main configuration */
@@ -92,6 +98,12 @@ ngx_module_t  ngx_rtmp_codec_module = {
     NGX_MODULE_V1_PADDING
 };
 
+static ngx_rtmp_variable_t  ngx_rtmp_codec_variabes[] = {
+    { ngx_string("metadata"), NULL, ngx_rtmp_codec_variable_metadata,
+      0, NGX_RTMP_VAR_NOCACHEABLE|NGX_RTMP_VAR_PREFIX, 0 },
+    { ngx_string("metadata_"), NULL, ngx_rtmp_codec_variable_metadata_arg,
+      0, NGX_RTMP_VAR_NOCACHEABLE|NGX_RTMP_VAR_PREFIX, 0 }
+};
 
 static const char *
 audio_codecs[] = {
@@ -1309,6 +1321,138 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     return NGX_OK;
 }
 
+static ngx_int_t
+ngx_rtmp_codec_variable_metadata(ngx_rtmp_session_t *s,
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
+{
+    ngx_rtmp_codec_ctx_t *ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
+    if (ctx == NULL) {
+        return NGX_OK;
+    }
+
+    u_char *metadata_args = ngx_pnalloc(s->pool, 1024);
+    u_char *p, *e;
+
+    p = metadata_args;
+    e = metadata_args + 1024;
+
+    #define NGX_METADATA_APPEND_UINT_VARIABLE(__key, __var)                    \
+        p = ngx_slprintf(p, e, "%s=%ui&", __key, __var);                       \
+
+    #define NGX_METADATA_APPEND_DOUBLE_VARIABLE(__key, __var)                  \
+        p = ngx_slprintf(p, e, "%s=%.2f&", __key, __var);                      \
+
+    #define NGX_METADATA_APPEND_STRING_VARIABLE(__key, __var)                  \
+        p = ngx_slprintf(p, e, "%s=%s&", __key, __var);                        \
+
+    NGX_METADATA_APPEND_UINT_VARIABLE("width", ctx->width);
+    NGX_METADATA_APPEND_UINT_VARIABLE("height", ctx->height);
+    NGX_METADATA_APPEND_UINT_VARIABLE("duration", ctx->duration);
+    NGX_METADATA_APPEND_DOUBLE_VARIABLE("framerate", ctx->frame_rate);
+    NGX_METADATA_APPEND_UINT_VARIABLE("fps", ctx->frame_rate);
+    NGX_METADATA_APPEND_UINT_VARIABLE("videodatarate", ctx->video_data_rate);
+    NGX_METADATA_APPEND_STRING_VARIABLE("videocodec",
+        ngx_rtmp_get_video_codec_name(ctx->video_codec_id));
+    NGX_METADATA_APPEND_STRING_VARIABLE("audiocodec",
+        ngx_rtmp_get_audio_codec_name(ctx->audio_codec_id));
+    NGX_METADATA_APPEND_UINT_VARIABLE("audiodatarate", ctx->audio_data_rate);
+    // NGX_METADATA_APPEND_STRING_VARIABLE("profile", ctx->profile);
+    // NGX_METADATA_APPEND_STRING_VARIABLE("level", ctx->level);
+
+    v->data = metadata_args;
+    v->len = p - metadata_args - 1;
+
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
+}
+
+static ngx_int_t
+ngx_rtmp_codec_variable_metadata_arg(ngx_rtmp_session_t *s,
+    ngx_rtmp_variable_value_t *v, uintptr_t data)
+{
+    ngx_str_t   *name = (ngx_str_t *) data;
+    u_char      *arg;
+    size_t       len;
+    u_char      *codec_name = (u_char*) "unknown";
+
+    ngx_rtmp_codec_ctx_t *ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
+    if (ctx == NULL) {
+        return NGX_OK;
+    }
+
+    len = name->len - (sizeof("metadata_") - 1);
+    arg = name->data + sizeof("metadata_") - 1;
+
+    #define NGX_METADATA_SET_UINT_VARIABLE(__key, __var)                       \
+        if (len == ngx_strlen((__key)) &&                                      \
+            ngx_strncasecmp((u_char *)(__key), arg, len) == 0) {               \
+            v->data = ngx_pnalloc(s->pool, NGX_INT64_LEN);                     \
+            if (v->data == NULL) {                                             \
+                return NGX_ERROR;                                              \
+            }                                                                  \
+            v->len = ngx_sprintf(v->data, "%ui", __var) - v->data;             \
+            return NGX_OK;                                                     \
+        }
+
+    #define NGX_METADATA_SET_DOUBLE_VARIABLE(__key, __var)                     \
+        if (len == ngx_strlen((__key)) &&                                      \
+            ngx_strncasecmp((u_char *)(__key), arg, len) == 0) {               \
+            v->data = ngx_pnalloc(s->pool, NGX_INT64_LEN);                     \
+            if (v->data == NULL) {                                             \
+                return NGX_ERROR;                                              \
+            }                                                                  \
+            v->len = ngx_sprintf(v->data, "%.2f", __var) - v->data;            \
+            return NGX_OK;                                                     \
+        }
+
+    #define NGX_METADATA_SET_STRING_VARIABLE(__key, __var)                     \
+        if (len == ngx_strlen((__key)) &&                                      \
+            ngx_strncasecmp((u_char *)(__key), arg, len) == 0) {               \
+            v->data = ngx_pnalloc(s->pool, NGX_INT64_LEN);                     \
+            if (v->data == NULL) {                                             \
+                return NGX_ERROR;                                              \
+            }                                                                  \
+            v->len = ngx_sprintf(v->data, "%s", __var) - v->data;              \
+            return NGX_OK;                                                     \
+        }
+
+    NGX_METADATA_SET_UINT_VARIABLE("width", ctx->width);
+    NGX_METADATA_SET_UINT_VARIABLE("height", ctx->height);
+    NGX_METADATA_SET_UINT_VARIABLE("duration", ctx->duration);
+    NGX_METADATA_SET_DOUBLE_VARIABLE("framerate", ctx->frame_rate);
+    NGX_METADATA_SET_UINT_VARIABLE("fps", ctx->frame_rate);
+    NGX_METADATA_SET_UINT_VARIABLE("videodatarate", ctx->video_data_rate);
+    NGX_METADATA_SET_UINT_VARIABLE("videocodecid", ctx->video_codec_id);
+    NGX_METADATA_SET_UINT_VARIABLE("audiodatarate", ctx->audio_data_rate);
+    NGX_METADATA_SET_UINT_VARIABLE("audiocodecid", ctx->audio_codec_id);
+    NGX_METADATA_SET_STRING_VARIABLE("profile", ctx->profile);
+    NGX_METADATA_SET_STRING_VARIABLE("level", ctx->level);
+
+    if (len == ngx_strlen("audiocodec") &&
+        !ngx_strncasecmp(arg, (u_char *) "audiocodec", len))
+    {
+        codec_name = ngx_rtmp_get_audio_codec_name(ctx->audio_codec_id);
+    }
+    else if (len == ngx_strlen("videocodec") &&
+        !ngx_strncasecmp(arg, (u_char *) "videocodec", len))
+    {
+        codec_name = ngx_rtmp_get_video_codec_name(ctx->video_codec_id);
+    }
+
+    v->len = ngx_strlen(codec_name);
+    v->data = ngx_pnalloc(s->pool, v->len);
+    ngx_snprintf(v->data, v->len, "%s", codec_name);
+
+
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
+}
 
 static void *
 ngx_rtmp_codec_create_app_conf(ngx_conf_t *cf)
@@ -1337,6 +1481,23 @@ ngx_rtmp_codec_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     return NGX_CONF_OK;
 }
 
+static ngx_int_t
+ngx_rtmp_codec_add_variables(ngx_conf_t *cf)
+{
+    ngx_rtmp_variable_t  *var, *v;
+
+    for (v = ngx_rtmp_codec_variabes; v->name.len; v++) {
+        var = ngx_rtmp_add_variable(cf, &v->name, v->flags);
+        if (var == NULL) {
+            return NGX_ERROR;
+        }
+
+        var->get_handler = v->get_handler;
+        var->data = v->data;
+    }
+
+    return NGX_OK;
+}
 
 static ngx_int_t
 ngx_rtmp_codec_postconfiguration(ngx_conf_t *cf)
