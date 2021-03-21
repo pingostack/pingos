@@ -113,7 +113,7 @@ static char *ngx_rtmp_notify_app_type[] = {
     "push",
     "stream",
     "meta",
-    "record",
+    "record"
 };
 
 typedef struct {
@@ -160,8 +160,9 @@ typedef struct {
 typedef struct {
     ngx_netcall_ctx_t          *nctx;
     ngx_netcall_ctx_t          *rctx;
+    ngx_netcall_ctx_t          *mctx; // metadata notify's netcall ctx
 
-    ngx_rtmp_notify_event_t      *event;
+    ngx_rtmp_notify_event_t    *event;
     ngx_uint_t                  type;
     ngx_live_relay_t           *relay;
 
@@ -1261,7 +1262,8 @@ ngx_rtmp_notify_pnotify_start_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
     }
 
 next:
-    if (octx->type == NGX_RTMP_OCLP_PUBLISH) {
+    
+    if (octx->nctx->type == NGX_RTMP_OCLP_PUBLISH) {
         if (next_publish(s, &octx->publish_v) != NGX_OK) {
             goto error;
         }
@@ -1288,8 +1290,40 @@ error:
     ngx_rtmp_finalize_session(s);
 }
 
+static void
+ngx_rtmp_notify_meta_start_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
+{
+    ngx_rtmp_session_t           *s;
+    ngx_rtmp_notify_app_conf_t   *oacf;
+
+    s = nctx->data;
+
+    oacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_notify_module);
+
+    s->notify_status = code;
+
+    if (code < NGX_HTTP_OK || code > NGX_HTTP_SPECIAL_RESPONSE) {
+        ngx_log_error(NGX_LOG_ERR, s->log, 0,
+                "meta %s start notify error: %i",
+               ngx_rtmp_notify_app_type[nctx->type], code);
+
+        if (code != -1 || !oacf->ignore_invalid_notify) {
+            goto error;
+        }
+
+        return;
+    }
+
+    return;
+
+error:
+
+    s->finalize_reason = NGX_LIVE_OCLP_NOTIFY_ERR;
+    ngx_rtmp_finalize_session(s);
+}
+
 static ngx_int_t
-ngx_rtmp_notify_pnotify_start(ngx_rtmp_session_t *s, ngx_uint_t type)
+ngx_rtmp_notify_meta_start(ngx_rtmp_session_t *s, ngx_uint_t type)
 {
     ngx_rtmp_notify_app_conf_t   *oacf;
     ngx_rtmp_notify_event_t      *event;
@@ -1320,11 +1354,69 @@ ngx_rtmp_notify_pnotify_start(ngx_rtmp_session_t *s, ngx_uint_t type)
 
     ngx_rtmp_notify_common_url(&nctx->url, s, event, nctx,
                                 NGX_RTMP_OCLP_START);
+    nctx->handler = ngx_rtmp_notify_meta_start_handle;
+    nctx->data = s;
+
+    ctx->mctx = nctx;
+
+    ngx_log_error(NGX_LOG_INFO, s->log, 0, "meta %s start create %V",
+            ngx_rtmp_notify_app_type[nctx->type], &nctx->url);
+
+    ngx_netcall_create(nctx, s->log);
+
+    return NGX_OK;
+}
+
+static void
+ngx_rtmp_notify_meta_done(ngx_rtmp_session_t *s)
+{
+    ngx_rtmp_notify_ctx_t        *ctx;
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_notify_module);
+    if (ctx == NULL) {
+        return;
+    }
+
+    ngx_rtmp_notify_common_done(s, ctx->mctx);
+}
+
+static ngx_int_t
+ngx_rtmp_notify_pnotify_start(ngx_rtmp_session_t *s, ngx_uint_t type)
+{
+    ngx_rtmp_notify_app_conf_t   *oacf;
+    ngx_rtmp_notify_event_t      *event;
+    ngx_rtmp_notify_ctx_t        *ctx;
+    ngx_netcall_ctx_t            *nctx;
+
+    oacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_notify_module);
+
+    if (oacf->events[type].nelts == 0) {
+        return NGX_DECLINED;
+    }
+
+    ctx = ngx_rtmp_get_module_ctx(s, ngx_rtmp_notify_module);
+    if (ctx == NULL) {
+        ctx = ngx_pcalloc(s->pool, sizeof(ngx_rtmp_notify_ctx_t));
+        if (ctx == NULL) {
+            ngx_log_error(NGX_LOG_ERR, s->log, 0, "palloc notify ctx failed");
+            return NGX_ERROR;
+        }
+        ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_notify_module);
+    }
+
+    event = oacf->events[type].elts;
+
+    nctx = ngx_netcall_create_ctx(type, &event->groupid,
+            event->stage, event->timeout, event->update, 0);
+    nctx->ev.log = s->log;
+
+    ngx_rtmp_notify_common_url(&nctx->url, s, event, nctx,
+                                NGX_RTMP_OCLP_START);
     nctx->handler = ngx_rtmp_notify_pnotify_start_handle;
     nctx->data = s;
 
     ctx->nctx = nctx;
-    ctx->type = type;
+    // ctx->type = type;
 
     ngx_log_error(NGX_LOG_INFO, s->log, 0, "notify %s start create %V",
             ngx_rtmp_notify_app_type[nctx->type], &nctx->url);
@@ -2059,7 +2151,7 @@ ngx_rtmp_notify_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
         event = oacf->events[NGX_RTMP_OCLP_META].elts;
         for (i = 0; i < oacf->events[NGX_RTMP_OCLP_META].nelts; ++i, ++event) {
             // ngx_rtmp_notify_relay_start(s, event, NGX_RTMP_OCLP_META, 0);
-            ngx_rtmp_notify_pnotify_start(s, NGX_RTMP_OCLP_META);
+            ngx_rtmp_notify_meta_start(s, NGX_RTMP_OCLP_META);
         }
     }
 
@@ -2127,6 +2219,7 @@ ngx_rtmp_notify_close_stream(ngx_rtmp_session_t *s, ngx_rtmp_close_stream_t *v)
         goto next;
     }
 
+    ngx_rtmp_notify_meta_done(s);
     ngx_rtmp_notify_pnotify_done(s);
 
 next:
