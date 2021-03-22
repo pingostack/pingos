@@ -205,6 +205,7 @@ ngx_mpegts_http_write_handler(ngx_http_request_t *r)
 
         sent = r->connection->sent - present;
 
+        s->out_bytes += sent;
         ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, sent);
 
         if (rc == NGX_AGAIN) {
