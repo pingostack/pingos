@@ -330,9 +330,6 @@ ngx_rtmp_close_session_handler(ngx_event_t *e)
 
     s = e->data;
     c = s->connection;
-    if (c) {
-        c->destroyed = 1;
-    }
 
     ngx_log_error(NGX_LOG_INFO, s->log, 0, "async close session");
 
@@ -400,46 +397,51 @@ ngx_rtmp_finalize_session(ngx_rtmp_session_t *s)
     ngx_event_t        *e;
     ngx_connection_t   *c;
 
-    ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize session");
-
-    if (s->live_type == NGX_HLS_LIVE) {
-        ngx_rtmp_finalize_fake_session(s);
-        return;
-    }
-
-    c = s->connection;
-    if (c && c->destroyed) {
-        return;
-    }
-
     if (s->finalized) {
-        ngx_log_error(NGX_LOG_WARN, s->log, 0, "The session has been finalized.");
         return;
     }
 
     s->finalized = 1;
 
-    if (s->live_type != NGX_RTMP_LIVE) {
-        e = &s->close;
-        e->data = s;
-        if (s->relay) {
-            e->handler = ngx_rtmp_async_finalize_http_client;
-        } else {
-            e->handler = ngx_rtmp_async_finalize_http_request;
-        }
-        e->log = s->log;
+    ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize session");
 
-        ngx_post_event(e, &ngx_posted_events);
+    switch (s->live_type) {
+        case NGX_RTMP_LIVE:
+            c = s->connection;
+            if (c && c->destroyed) {
+                return;
+            }
 
-        return;
+            if (c) {
+                c->destroyed = 1;
+            }
+
+            e = &s->close;
+            e->data = s;
+            e->handler = ngx_rtmp_close_session_handler;
+            e->log = s->log;
+
+            ngx_post_event(e, &ngx_posted_events);
+            break;
+
+        case NGX_HTTP_FLV_LIVE:
+        case NGX_MPEGTS_LIVE:
+            e = &s->close;
+            e->data = s;
+            if (s->relay) {
+                e->handler = ngx_rtmp_async_finalize_http_client;
+            } else {
+                e->handler = ngx_rtmp_async_finalize_http_request;
+            }
+            e->log = s->log;
+
+            ngx_post_event(e, &ngx_posted_events);
+            break;
+
+        case NGX_HLS_LIVE:
+            ngx_rtmp_finalize_fake_session(s);
+            break;
     }
-
-    e = &s->close;
-    e->data = s;
-    e->handler = ngx_rtmp_close_session_handler;
-    e->log = s->log;
-
-    ngx_post_event(e, &ngx_posted_events);
 }
 
 
@@ -447,15 +449,13 @@ ngx_rtmp_finalize_session(ngx_rtmp_session_t *s)
 void
 ngx_rtmp_finalize_fake_session(ngx_rtmp_session_t *s)
 {
-    ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize fake session");
-
-
-    if (s->finalized) {
-        ngx_log_error(NGX_LOG_WARN, s->log, 0, "The fake session has been finalized.");
+    if (s->destroyed) {
         return;
     }
 
-    s->finalized = 1;
+    s->destroyed = 1;
+
+    ngx_log_error(NGX_LOG_INFO, s->log, 0, "finalize fake session");
 
     ngx_rtmp_fire_event(s, NGX_RTMP_DISCONNECT, NULL, NULL);
 

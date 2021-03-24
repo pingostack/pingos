@@ -473,8 +473,8 @@ ngx_mpegts_http_handler(ngx_http_request_t *r)
     }
     ctx->session = s;
     s->connection = r->connection;
-    ngx_rtmp_set_combined_log(s, r->connection->log->data,
-            r->connection->log->handler);
+//    ngx_rtmp_set_combined_log(s, r->connection->log->data,
+//            r->connection->log->handler);
     s->log->connection = r->connection->number;
     s->number = r->connection->number;
     s->remote_addr_text.data = ngx_pcalloc(s->pool, r->connection->addr_text.len);
