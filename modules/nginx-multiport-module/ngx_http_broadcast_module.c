@@ -12,11 +12,15 @@
 typedef struct {
 	ngx_str_t                           multiport;
     ngx_str_t                           uri;
+    ngx_str_t                           prefix;
+    ngx_str_t                           new_prefix;
+    ngx_str_t                           suffix;
 } ngx_http_broadcast_conf_t;
 
 typedef struct {
     ngx_int_t                           workerid;
     ngx_http_request_t                 *sr;
+    ngx_flag_t                          has_rewrite;
 } ngx_http_broadcast_ctx_t;
 
 
@@ -26,6 +30,9 @@ static void *ngx_http_broadcast_create_conf(ngx_conf_t *cf);
 static char *ngx_http_broadcast_merge_conf(ngx_conf_t *cf,
        void *parent, void *child);
 static char *ngx_http_broadcast(ngx_conf_t *cf, ngx_command_t *cmd,
+       void *conf);
+static char *
+ngx_http_broadcast_rewrite_prefix(ngx_conf_t *cf, ngx_command_t *cmd,
        void *conf);
 
 
@@ -38,7 +45,19 @@ static ngx_command_t  ngx_http_broadcast_commands[] = {
       0,
       NULL },
 
-      ngx_null_command
+    { ngx_string("broadcast_rewrite_prefix"),
+      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
+      ngx_http_broadcast_rewrite_prefix,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("broadcast_suffix"),
+      NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_broadcast_conf_t, suffix),
+      NULL }
 };
 
 
@@ -98,6 +117,9 @@ ngx_http_broadcast_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_str_value(conf->multiport, prev->multiport, "");
     ngx_conf_merge_str_value(conf->uri, prev->uri, "");
+    ngx_conf_merge_str_value(conf->prefix, prev->prefix, "");
+    ngx_conf_merge_str_value(conf->prefix, prev->new_prefix, "");
+    ngx_conf_merge_str_value(conf->suffix, prev->suffix, "");
 
     return NGX_CONF_OK;
 }
@@ -122,6 +144,20 @@ ngx_http_broadcast(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
+static char *
+ngx_http_broadcast_rewrite_prefix(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_str_t                  *value;
+    ngx_http_broadcast_conf_t  *hbcf;
+
+    hbcf = conf;
+
+    value = cf->args->elts;
+    hbcf->prefix = value[1];
+    hbcf->new_prefix = value[2];
+
+    return NGX_CONF_OK;
+}
 
 static ngx_int_t
 ngx_http_broadcast_header_filter(ngx_http_request_t *r)
@@ -207,6 +243,28 @@ ngx_http_broadcast_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
             return NGX_OK;
         }
 
+        ctx = ngx_http_get_module_ctx(r->main, ngx_http_broadcast_module);
+        if (ctx == NULL) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                    "ctx is null");
+            return NGX_OK;
+        }
+
+        b = in->buf;
+        if (!in || !b || b->last == b->pos) {
+            return ngx_http_next_body_filter(r, in);
+        }
+
+        if (ctx->has_rewrite == 0 &&
+            hbcf->prefix.len > 0 &&
+            ((size_t) (b->last - b->pos) >= hbcf->prefix.len) &&
+            !ngx_strncmp(b->pos, hbcf->prefix.data, hbcf->prefix.len))
+        {
+            ctx->has_rewrite = 1;
+            ngx_slprintf(in->buf->pos, in->buf->last,
+                "%V", &hbcf->new_prefix);
+        }
+
         return ngx_http_next_body_filter(r, in);
     }
 
@@ -235,10 +293,16 @@ ngx_http_broadcast_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         return rc;
     }
 
-    b = ngx_pcalloc(r->pool, sizeof(ngx_buf_t));
+    if (hbcf->suffix.len) {
+        b = ngx_create_temp_buf(r->pool, hbcf->suffix.len);
 
-    if (b == NULL) {
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        if (b == NULL) {
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        b->last = ngx_slprintf(b->pos, b->end, "%V", &hbcf->suffix);
+    } else {
+        b = ngx_pcalloc(r->pool, sizeof(ngx_buf_t));
     }
 
     b->last_buf = 1;

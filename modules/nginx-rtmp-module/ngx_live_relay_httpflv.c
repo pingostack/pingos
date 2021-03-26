@@ -403,6 +403,11 @@ ngx_live_relay_httpflv_recv_body(void *request, ngx_http_request_t *hcr)
         h = &st->hdr;
         in = st->in;
 
+        if (s->live_stream) {
+            ngx_rtmp_update_bandwidth(&s->live_stream->bw_in, h->mlen);
+        }
+        ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_in, h->mlen);
+
         if (ngx_rtmp_receive_message(s, h, in) != NGX_OK) {
             ngx_rtmp_finalize_session(s);
             return;

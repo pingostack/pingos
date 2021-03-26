@@ -15,7 +15,8 @@
 #include "ngx_event_resolver.h"
 #include "ngx_dynamic_resolver.h"
 #include "ngx_live.h"
-
+#include "ngx_live_stat.h"
+#include "json/cJSON.h"
 
 static char *ngx_rtmp_sys_stat(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
@@ -66,7 +67,7 @@ ngx_module_t  ngx_rtmp_sys_stat_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+#if 0
 static ngx_int_t
 ngx_rtmp_sys_stat_handler(ngx_http_request_t *r)
 {
@@ -154,6 +155,56 @@ ngx_rtmp_sys_stat_handler(ngx_http_request_t *r)
     *ll = ngx_poold_state(r, detail);
 
     (*ll)->buf->last_buf = 1;
+
+    return ngx_http_output_filter(r, out);
+}
+#endif
+
+static ngx_int_t
+ngx_rtmp_sys_stat_handler(ngx_http_request_t *r)
+{
+    ngx_chain_t    *out;
+    ngx_buf_t      *b;
+    size_t          len = 0;
+    cJSON          *root;
+    cJSON          *info_array;
+    cJSON          *info_item;
+    u_char         *json_out;
+
+    r->headers_out.status = NGX_HTTP_OK;
+    ngx_http_send_header(r);
+
+    root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "ngx_worker", ngx_worker);
+    cJSON_AddNumberToObject(root, "ngx_process_slot", ngx_process_slot);
+    cJSON_AddNumberToObject(root, "ngx_pid", ngx_pid);
+
+    info_array = cJSON_AddArrayToObject(root, "info_array");
+    info_item = cJSON_CreateObject();
+    cJSON_AddStringToObject(info_item, "info_type", "live");
+    ngx_live_stat(info_item);
+    cJSON_AddItemToArray(info_array, info_item);
+
+    json_out = (u_char *) cJSON_Print(root);
+
+    len = ngx_strlen(json_out);
+
+    out = ngx_alloc_chain_link(r->pool);
+    if (out == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+    out->next = NULL;
+
+    b = ngx_create_temp_buf(r->pool, len + 1);
+    if (b == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+    out->buf = b;
+    b->last = ngx_slprintf(b->pos, b->end, " %s", json_out);
+
+    out->buf->last_buf = 1;
+
+    free(json_out);
 
     return ngx_http_output_filter(r, out);
 }

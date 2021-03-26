@@ -967,6 +967,9 @@ ngx_hls_http_write_handler(ngx_http_request_t *r)
         sent = r->connection->sent - present;
 
         ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, sent);
+        if (s->live_stream) {
+            ngx_rtmp_update_bandwidth(&s->live_stream->bw_out, sent);
+        }
 
         if (rc == NGX_AGAIN) {
             ngx_add_timer(wev, s->timeout);
@@ -1078,6 +1081,9 @@ ngx_hls_http_ts_handler(ngx_http_request_t *r, ngx_rtmp_addr_conf_t *addr_conf)
         ctx->out_chain = ngx_hls_live_prepare_frag(s, frag);
 
         ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, frag->length);
+        if (s->live_stream) {
+            ngx_rtmp_update_bandwidth(&s->live_stream->bw_out, frag->length);
+        }
 
         return ngx_http_output_filter(r, ctx->out_chain);
     }

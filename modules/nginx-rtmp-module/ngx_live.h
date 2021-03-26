@@ -9,7 +9,6 @@
 
 #include "ngx_rtmp.h"
 
-
 typedef struct {
     size_t                      stream_buckets;
     size_t                      server_buckets;
@@ -36,7 +35,7 @@ extern ngx_module_t     ngx_live_module;
  * paras:
  *      r: http request to query status of rbuf
  */
-ngx_chain_t *ngx_live_state(ngx_http_request_t *r);
+ngx_chain_t *ngx_live_sys_state(ngx_http_request_t *r);
 
 
 #endif

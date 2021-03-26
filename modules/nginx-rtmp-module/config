@@ -69,6 +69,8 @@ RTMP_DEPS="                                                     \
                 $ngx_addon_dir/mpegts/ngx_mpegts_live_module.h  \
                 $ngx_addon_dir/mpegts/ngx_hls_live_module.h     \
                 $ngx_addon_dir/mpegts/ngx_mpegts_gop_module.h   \
+                $ngx_addon_dir/json/cJSON.h                     \
+                $ngx_addon_dir/ngx_live_stat.h                  \
                 "
 
 
@@ -115,6 +117,8 @@ RTMP_CORE_SRCS="                                                \
                 $ngx_addon_dir/mpegts/ngx_mpegts_live_module.c  \
                 $ngx_addon_dir/mpegts/ngx_hls_live_module.c     \
                 $ngx_addon_dir/mpegts/ngx_mpegts_gop_module.c   \
+                $ngx_addon_dir/json/cJSON.c                     \
+                $ngx_addon_dir/ngx_live_stat.c                  \
                 "
 
 

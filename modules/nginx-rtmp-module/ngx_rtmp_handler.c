@@ -277,6 +277,9 @@ ngx_rtmp_recv(ngx_event_t *rev)
 
             s->ping_reset = 1;
             ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_in, n);
+            if (s->live_stream) {
+                ngx_rtmp_update_bandwidth(&s->live_stream->bw_in, n);
+            }
             b->last += n;
             s->in_bytes += n;
 
@@ -745,6 +748,9 @@ ngx_rtmp_send(ngx_event_t *wev)
         s->out_bytes += n;
         s->ping_reset = 1;
         ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, n);
+        if (s->live_stream) {
+            ngx_rtmp_update_bandwidth(&s->live_stream->bw_out, n);
+        }
 
         if (ngx_rtmp_prepare_merge_frame(s) == NGX_ERROR) {
             ngx_rtmp_finalize_session(s);

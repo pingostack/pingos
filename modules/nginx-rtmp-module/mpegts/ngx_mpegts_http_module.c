@@ -207,6 +207,9 @@ ngx_mpegts_http_write_handler(ngx_http_request_t *r)
 
         s->out_bytes += sent;
         ngx_rtmp_update_bandwidth(&ngx_rtmp_bw_out, sent);
+        if (s->live_stream) {
+            ngx_rtmp_update_bandwidth(&s->live_stream->bw_out, sent);
+        }
 
         if (rc == NGX_AGAIN) {
             ngx_add_timer(wev, s->timeout);

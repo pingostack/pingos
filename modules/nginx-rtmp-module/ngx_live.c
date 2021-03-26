@@ -79,8 +79,8 @@ ngx_live_init_conf(ngx_cycle_t *cycle, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    ngx_conf_init_size_value(lcf->stream_buckets, 10007);
-    ngx_conf_init_size_value(lcf->server_buckets, 1031);
+    ngx_conf_init_size_value(lcf->stream_buckets, 50);
+    ngx_conf_init_size_value(lcf->server_buckets, 2);
 
     lcf->servers = ngx_pcalloc(lcf->pool,
             sizeof(ngx_live_server_t *) * lcf->server_buckets);
@@ -409,7 +409,7 @@ ngx_live_delete_ctx(ngx_rtmp_session_t *s)
 
 
 ngx_chain_t *
-ngx_live_state(ngx_http_request_t *r)
+ngx_live_sys_state(ngx_http_request_t *r)
 {
     ngx_live_conf_t            *lcf;
     ngx_chain_t                *cl;

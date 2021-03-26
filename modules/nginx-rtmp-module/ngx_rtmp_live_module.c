@@ -810,6 +810,11 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         }
     }
 
+    ngx_rtmp_update_bandwidth(h->type == NGX_RTMP_MSG_AUDIO ?
+                            &ctx->stream->bw_in_audio :
+                            &ctx->stream->bw_in_video,
+                            h->mlen);
+
     if (ngx_rtmp_gop_cache(s, avframe) == NGX_ERROR) {
         return NGX_ERROR;
     }
@@ -971,14 +976,6 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     if (dummy) {
         ngx_rtmp_shared_free_frame(dummy);
     }
-
-    ngx_rtmp_update_bandwidth(&ctx->stream->bw_in, h->mlen);
-    ngx_rtmp_update_bandwidth(&ctx->stream->bw_out, h->mlen * peers);
-
-    ngx_rtmp_update_bandwidth(h->type == NGX_RTMP_MSG_AUDIO ?
-                              &ctx->stream->bw_in_audio :
-                              &ctx->stream->bw_in_video,
-                              h->mlen);
 
     return NGX_OK;
 }
