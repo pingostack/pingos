@@ -194,11 +194,17 @@ ngx_live_stream_stat(cJSON *obj, ngx_live_server_t *srv)
                     (cJSON_bool) s->publishing);
                 cJSON_AddBoolToObject(client_item, "relay",
                     (cJSON_bool) s->relay);
+                cJSON_AddBoolToObject(client_item, "interprocess",
+                    (cJSON_bool) s->interprocess);
                 cJSON_AddStringToObject(client_item, "protocol",
                     ngx_live_protocol_string[s->live_type]);
 
                 if (ctx->publishing) {
                     codec = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
+                    continue;
+                }
+
+                if (s->relay || s->interprocess) {
                     continue;
                 }
 
