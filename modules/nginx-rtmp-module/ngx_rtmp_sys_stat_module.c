@@ -167,8 +167,7 @@ ngx_rtmp_sys_stat_handler(ngx_http_request_t *r)
     ngx_buf_t      *b;
     size_t          len = 0;
     cJSON          *root;
-    cJSON          *info_array;
-    cJSON          *info_item;
+    cJSON          *live_stream;
     u_char         *json_out;
 
     r->headers_out.status = NGX_HTTP_OK;
@@ -179,11 +178,8 @@ ngx_rtmp_sys_stat_handler(ngx_http_request_t *r)
     cJSON_AddNumberToObject(root, "ngx_process_slot", ngx_process_slot);
     cJSON_AddNumberToObject(root, "ngx_pid", ngx_pid);
 
-    info_array = cJSON_AddArrayToObject(root, "info_array");
-    info_item = cJSON_CreateObject();
-    cJSON_AddStringToObject(info_item, "info_type", "live");
-    ngx_live_stat(info_item);
-    cJSON_AddItemToArray(info_array, info_item);
+    live_stream = cJSON_AddObjectToObject(root, "live_stream");
+    ngx_live_stat(live_stream);
 
     json_out = (u_char *) cJSON_Print(root);
 

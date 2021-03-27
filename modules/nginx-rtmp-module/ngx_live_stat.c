@@ -122,6 +122,10 @@ ngx_live_stream_stat(cJSON *obj, ngx_live_server_t *srv)
     ngx_rtmp_session_t             *s;
     size_t                          n;
     ngx_uint_t                      nclients, total_nclients;
+    ngx_uint_t                      nrtmpclients, total_nrtmpclients;
+    ngx_uint_t                      nflvclients, total_nflvclients;
+    ngx_uint_t                      ntsclients, total_ntsclients;
+    ngx_uint_t                      nhlsclients, total_nhlsclients;
     ngx_live_conf_t                *lcf;
     u_char                         *cname;
     cJSON                          *stream_array, *stream_item;
@@ -133,7 +137,12 @@ ngx_live_stream_stat(cJSON *obj, ngx_live_server_t *srv)
     lcf = (ngx_live_conf_t *) ngx_get_conf(ngx_cycle->conf_ctx,
                                            ngx_live_module);
 
-    total_nclients = 0;
+    total_nrtmpclients = 0;
+    total_nflvclients  = 0;
+    total_nhlsclients  = 0;
+    total_ntsclients   = 0;
+    total_nclients     = 0;
+
     stream_array = cJSON_AddArrayToObject(obj, "stream_array");
 
     for (n = 0; n < lcf->stream_buckets; ++n) {
@@ -141,7 +150,7 @@ ngx_live_stream_stat(cJSON *obj, ngx_live_server_t *srv)
             stream_item = cJSON_CreateObject();
             cJSON_AddStringToObject(stream_item, "name", (char*) stream->name);
             cJSON_AddNumberToObject(stream_item, "time",
-                (ngx_int_t) (ngx_current_msec - stream->epoch));
+                ngx_current_msec - stream->epoch);
 
             stream_in = cJSON_AddObjectToObject(stream_item, "in");
             ngx_live_stat_bw(stream_in,
@@ -158,28 +167,59 @@ ngx_live_stream_stat(cJSON *obj, ngx_live_server_t *srv)
             ngx_live_stat_bw(stream_out,
                 &stream->bw_out, NGX_LIVE_STAT_BW_BYTES);
 
-            nclients = 0;
             codec = NULL;
             client_array = cJSON_AddArrayToObject(stream_item, "client_array");
-            for (ctx = stream->ctx; ctx; ctx = ctx->next, ++nclients) {
+
+            nrtmpclients = 0;
+            nflvclients  = 0;
+            nhlsclients  = 0;
+            ntsclients   = 0;
+            nclients     = 0;
+
+            for (ctx = stream->ctx; ctx; ctx = ctx->next) {
                 s = ctx->session;
                 client_item = cJSON_CreateObject();
+                cJSON_AddItemToArray(client_array, client_item);
+
                 ngx_live_stat_client(client_item, s);
 
                 cJSON_AddNumberToObject(client_item, "dropped", ctx->ndropped);
                 cJSON_AddNumberToObject(client_item, "avsync",
                     ctx->cs[1].timestamp - ctx->cs[0].timestamp);
-                cJSON_AddNumberToObject(client_item, "timestamp", s->current_time);
-                cJSON_AddBoolToObject(client_item, "active", (cJSON_bool) ctx->active);
-                cJSON_AddBoolToObject(client_item, "publishing", (cJSON_bool) s->publishing);
+                cJSON_AddNumberToObject(client_item, "timestamp",
+                    s->current_time);
+                cJSON_AddBoolToObject(client_item, "active",
+                    (cJSON_bool) ctx->active);
+                cJSON_AddBoolToObject(client_item, "publishing",
+                    (cJSON_bool) s->publishing);
+                cJSON_AddBoolToObject(client_item, "relay",
+                    (cJSON_bool) s->relay);
+                cJSON_AddStringToObject(client_item, "protocol",
+                    ngx_live_protocol_string[s->live_type]);
 
                 if (ctx->publishing) {
                     codec = ngx_rtmp_get_module_ctx(s, ngx_rtmp_codec_module);
+                    continue;
                 }
-                cJSON_AddItemToArray(client_array, client_item);
-            }
 
-            total_nclients += nclients;
+                switch (s->live_type) {
+                    case NGX_RTMP_LIVE:
+                    nrtmpclients++;
+                    break;
+
+                case NGX_HTTP_FLV_LIVE:
+                    nflvclients++;
+                    break;
+
+                case NGX_HLS_LIVE:
+                    nhlsclients++;
+                    break;
+
+                case NGX_MPEGTS_LIVE:
+                    ntsclients++;
+                    break;
+                }
+            }
 
             if (codec) {
                 meta = cJSON_AddObjectToObject(stream_item, "meta");
@@ -225,13 +265,32 @@ ngx_live_stream_stat(cJSON *obj, ngx_live_server_t *srv)
                 }
             }
 
-            cJSON_AddNumberToObject(stream_item, "nclients", nclients);
+            nclients += nrtmpclients;
+            nclients += nflvclients;
+            nclients += nhlsclients;
+            nclients += ntsclients;
+
+            total_nrtmpclients += nrtmpclients;
+            total_nflvclients += nflvclients;
+            total_nhlsclients += nhlsclients;
+            total_ntsclients += ntsclients;
+            total_nclients += nclients;
+
+            cJSON_AddNumberToObject(stream_item, "total_clients", nclients);
+            cJSON_AddNumberToObject(stream_item, "rtmp_clients", nrtmpclients);
+            cJSON_AddNumberToObject(stream_item, "flv_clients", nflvclients);
+            cJSON_AddNumberToObject(stream_item, "hls_clients", nhlsclients);
+            cJSON_AddNumberToObject(stream_item, "ts_clients", ntsclients);
             cJSON_AddBoolToObject(stream_item, "active", stream->active);
             cJSON_AddItemToArray(stream_array, stream_item);
         }
     }
 
-    cJSON_AddNumberToObject(obj, "nclients", total_nclients);
+    cJSON_AddNumberToObject(obj, "total_clients", total_nclients);
+    cJSON_AddNumberToObject(obj, "rtmp_clients", total_nrtmpclients);
+    cJSON_AddNumberToObject(obj, "flv_clients", total_nflvclients);
+    cJSON_AddNumberToObject(obj, "hls_clients", total_nhlsclients);
+    cJSON_AddNumberToObject(obj, "ts_clients", total_ntsclients);
 }
 
 
@@ -245,8 +304,6 @@ ngx_live_stat(cJSON *obj)
     cJSON               *all_in;
     cJSON               *all_out;
     cJSON               *item;
-
-    cJSON_AddStringToObject(obj, "type", "live_stream");
 
     cJSON_AddStringToObject(obj, "server_version", NGINX_VERSION);
     cJSON_AddStringToObject(obj, "compiler", NGX_COMPILER);

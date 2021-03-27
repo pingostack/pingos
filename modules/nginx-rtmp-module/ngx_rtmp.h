@@ -224,6 +224,8 @@ struct ngx_mpegts_frame_s {
 #define NGX_HLS_LIVE        2
 #define NGX_MPEGTS_LIVE     3
 
+extern char *ngx_live_protocol_string[4];
+
 typedef struct ngx_rtmp_session_s  ngx_rtmp_session_t;
 
 #define NGX_RTMP_MAX_MERGE_FRAME    64
