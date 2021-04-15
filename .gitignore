@@ -1,7 +1,10 @@
 docker/*.tar*
 openresty/
-nginx/
 .git/
 *.code-workspace
 .DS_Store
 h5player/
+.vscode/
+nginx/
+source/
+rpmbuild/

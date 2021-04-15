@@ -907,13 +907,17 @@ ngx_rtmp_notify_init_master_netcall(ngx_cycle_t *cycle)
 {
     ngx_rtmp_notify_main_conf_t  *omcf;
     ngx_rtmp_notify_event_t      *event;
-    ngx_rtmp_conf_ctx_t        *ctx;
-    ngx_netcall_ctx_t          *nctx;
-    ngx_event_t                *ev;
+    ngx_rtmp_conf_ctx_t          *ctx;
+    ngx_netcall_ctx_t            *nctx;
+    ngx_event_t                  *ev;
 
     if (ngx_process != NGX_PROCESS_WORKER &&
         ngx_process != NGX_PROCESS_SINGLE)
     {
+        return NGX_OK;
+    }
+
+    if (ngx_worker != 0) {
         return NGX_OK;
     }
 

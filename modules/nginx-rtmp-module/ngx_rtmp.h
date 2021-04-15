@@ -176,6 +176,7 @@ typedef struct {
     uint32_t                dtime;
     uint32_t                len;        /* current fragment length */
     uint8_t                 ext;
+    uint32_t                last_extimestamp;
     ngx_chain_t            *in;
 } ngx_rtmp_stream_t;
 

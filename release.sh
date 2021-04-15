@@ -258,7 +258,7 @@ then
         if [ ! -d $WWW_ROOT"/h5player" ]
         then
             cd $WWW_ROOT
-            git clone https://github.com/im-pingo/h5player.git
+            git clone https://github.com/pingostack/h5player.git
             cd $OPWD
         fi
     fi
