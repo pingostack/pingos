@@ -238,7 +238,10 @@ ngx_event_multiport_init_listening(ngx_cycle_t *cycle, ngx_listening_t *ls,
 
     ls->pool_size = cls->pool_size;
     ls->post_accept_buffer_size = cls->post_accept_buffer_size;
+
+#if (nginx_version < 1019007)
     ls->post_accept_timeout = cls->post_accept_timeout;
+#endif
 
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     ls->ipv6only = cls->ipv6only;

@@ -205,7 +205,7 @@ cd nginx
 
 if [ ! -f "Makefile" ]
 then
-    config="./configure"
+    config="./auto/configure"
     for option in ${options[*]}
     do
         config=$config" "$option

@@ -616,7 +616,7 @@ ngx_client_write_handler(ngx_event_t *ev)
             "nginx client write handler");
 
     if (!s->connected) {
-        ngx_client_connected(s);
+        ngx_client_close(s);
 
         return;
     }

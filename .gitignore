@@ -5,6 +5,5 @@ openresty/
 .DS_Store
 h5player/
 .vscode/
-nginx/
 source/
 rpmbuild/
