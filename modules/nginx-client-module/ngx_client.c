@@ -608,7 +608,7 @@ ngx_client_write_handler(ngx_event_t *ev)
     c = ev->data;
     s = c->data;
 
-    if (c->destroyed) {
+    if (c->destroyed || s->closed) {
         return;
     }
 
@@ -616,7 +616,7 @@ ngx_client_write_handler(ngx_event_t *ev)
             "nginx client write handler");
 
     if (!s->connected) {
-        ngx_client_close(s);
+        ngx_client_connected(s);
 
         return;
     }
