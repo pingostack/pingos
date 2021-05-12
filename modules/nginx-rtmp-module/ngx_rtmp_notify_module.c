@@ -448,7 +448,7 @@ ngx_rtmp_notify_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_uint_value(conf->meta_type, prev->meta_type,
                               NGX_RTMP_OCLP_META_VIDEO);
     ngx_conf_merge_value(conf->ignore_invalid_notify,
-        prev->ignore_invalid_notify, 1);
+        prev->ignore_invalid_notify, 0);
 
     return NGX_CONF_OK;
 }

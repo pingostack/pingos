@@ -52,7 +52,7 @@ RTMP_DEPS="                                                     \
                 $ngx_addon_dir/ngx_rtmp.h                       \
                 $ngx_addon_dir/ngx_rtmp_version.h               \
                 $ngx_addon_dir/ngx_rtmp_live_module.h           \
-                $ngx_addon_dir/ngx_rtmp_notify_module.h           \
+                $ngx_addon_dir/ngx_rtmp_notify_module.h         \
                 $ngx_addon_dir/ngx_rtmp_streams.h               \
                 $ngx_addon_dir/ngx_rtmp_bitop.h                 \
                 $ngx_addon_dir/ngx_rtmp_proxy_protocol.h        \
