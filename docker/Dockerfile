@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM jrottenberg/ffmpeg:4-ubuntu
 
 RUN \
     apt update && \
@@ -10,8 +10,11 @@ RUN \
     rm -rf pingos && \
     apt autoclean && apt autoremove && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/cache/apt/*
+    rm -rf /var/cache/apt/* && \
+    cp /usr/local/bin/ffmpeg /usr/bin
 
 WORKDIR /usr/local/pingos/
 
-CMD ["./sbin/nginx", "-g", "daemon off;"]
+ENTRYPOINT [ "./sbin/nginx" ]
+CMD ["-g", "daemon off;"]
+
