@@ -7,7 +7,6 @@ services:
       - ./conf/nginx.conf:/usr/local/pingos/conf/nginx.conf:ro
       - type: tmpfs
         target: /tmp
-    command: [./sbin/nginx, '-g', 'daemon off;'] 
     network_mode: "host"
     privileged: true
     restart: always
