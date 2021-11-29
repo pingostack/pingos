@@ -194,7 +194,9 @@ fi
 
 if [ ! -d "./nginx" ]
 then
-    wget https://nginx.org/download/nginx-1.17.5.tar.gz
+    if [ ! -f "./nginx-1.17.5.tar.gz" ]; then
+        wget https://nginx.org/download/nginx-1.17.5.tar.gz
+    fi
     tar zxvf nginx-1.17.5.tar.gz
     mv nginx-1.17.5 nginx
     rm -f nginx-1.17.5.tar.gz
