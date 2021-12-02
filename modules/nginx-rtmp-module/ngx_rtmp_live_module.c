@@ -714,9 +714,9 @@ ngx_rtmp_live_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
         ngx_add_timer(&ctx->idle_evt, lacf->idle_timeout);
     }
 
-    ngx_log_debug2(NGX_LOG_DEBUG_RTMP, s->log, 0,
-                   "live: %s packet timestamp=%uD",
-                   MSG_TYPE, h->timestamp);
+    // ngx_log_error(NGX_LOG_INFO, s->log, 0,
+    //                "live: %s packet timestamp=%uD",
+    //                MSG_TYPE, h->timestamp);
 
     s->current_time = h->timestamp;
 
