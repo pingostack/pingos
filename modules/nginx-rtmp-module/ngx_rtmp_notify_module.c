@@ -1318,6 +1318,7 @@ ngx_rtmp_notify_meta_start_handle(ngx_netcall_ctx_t *nctx, ngx_int_t code)
         return;
     }
 
+    ngx_rtmp_notify_common_update_create(s, nctx);
     return;
 
 error:
@@ -2124,9 +2125,9 @@ ngx_rtmp_notify_av(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h, ngx_chain_t *in)
 {
     ngx_rtmp_notify_app_conf_t   *oacf;
     ngx_rtmp_notify_event_t      *event;
-    ngx_uint_t                  i;
+    ngx_uint_t                    i;
 
-    if (ngx_rtmp_is_codec_header(in)) {
+    if (ngx_rtmp_is_codec_header(in) && !s->interprocess && !s->relay) {
         oacf = ngx_rtmp_get_module_app_conf(s, ngx_rtmp_notify_module);
 
         if (oacf->meta_once && s->live_stream->notify_meta) {

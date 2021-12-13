@@ -27,6 +27,10 @@ static u_char  ngx_flv_live_av_header[] = "FLV\x1\x5\0\0\0\x9\0\0\0\0";
 static ngx_keyval_t ngx_http_flv_live_headers[] = {
     { ngx_string("Cache-Control"),  ngx_string("no-cache") },
     { ngx_string("Content-Type"),   ngx_string("video/x-flv") },
+    { ngx_string("Access-Control-Allow-Origin"),      ngx_string("*") },
+    { ngx_string("Access-Control-Allow-Credentials"), ngx_string("*") },
+    { ngx_string("Access-Control-Expose-Headers"),    ngx_string("*") },
+    { ngx_string("Access-Control-Allow-Headers"), ngx_string("Content-Type,Access-Token") },
     { ngx_null_string, ngx_null_string }
 };
 
@@ -98,7 +102,6 @@ static ngx_int_t
 ngx_http_flv_live_send_header(ngx_http_request_t *r)
 {
     ngx_int_t                           rc;
-    ngx_keyval_t                       *h;
     ngx_buf_t                          *b;
     ngx_chain_t                         out;
     ngx_http_flv_live_loc_conf_t       *hflcf;
@@ -111,15 +114,6 @@ ngx_http_flv_live_send_header(ngx_http_request_t *r)
 
     r->headers_out.status = NGX_HTTP_OK;
     r->keepalive = 0; /* set Connection to closed */
-
-    h = ngx_http_flv_live_headers;
-    while (h->key.len) {
-        rc = ngx_http_set_header_out(r, &h->key, &h->value);
-        if (rc != NGX_OK) {
-            return rc;
-        }
-        ++h;
-    }
 
     rc = ngx_http_send_header(r);
     if (rc == NGX_ERROR || rc > NGX_OK) {
@@ -546,6 +540,16 @@ ngx_http_flv_live_handler(ngx_http_request_t *r)
     ngx_rtmp_core_app_conf_t          **cacfp;
     ngx_http_cleanup_t                 *cln;
     ngx_rtmp_core_main_conf_t          *cmcf;
+    ngx_keyval_t                       *h;
+
+    h = ngx_http_flv_live_headers;
+    while (h->key.len) {
+        rc = ngx_http_set_header_out(r, &h->key, &h->value);
+        if (rc != NGX_OK) {
+            return rc;
+        }
+        ++h;
+    }
 
     rc = ngx_http_discard_request_body(r);
 

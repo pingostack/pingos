@@ -823,7 +823,7 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
     ngx_rtmp_bit_read(&br, 16);
 
     /* nal type */
-    if (ngx_rtmp_bit_read_8(&br) != 0x67) {
+    if ((ngx_rtmp_bit_read_8(&br) & 0x1f) != 7) {
         return;
     }
 
@@ -953,12 +953,12 @@ ngx_rtmp_codec_parse_avc_header(ngx_rtmp_session_t *s, ngx_chain_t *in)
         crop_bottom = 0;
     }
 
-    ctx->width = (width + 1) * 16 - (crop_left + crop_right) * 2;
-    ctx->height = (2 - frame_mbs_only) * (height + 1) * 16 -
-                  (crop_top + crop_bottom) * 2;
+   ctx->width = (width + 1) * 16 - (crop_left + crop_right) * 2;
+   ctx->height = (2 - frame_mbs_only) * (height + 1) * 16 -
+                 (crop_top + crop_bottom) * 2;
 
-    ngx_log_debug7(NGX_LOG_DEBUG_RTMP, s->log, 0,
-                   "codec: avc header "
+    ngx_log_error(NGX_LOG_INFO, s->log, 0,
+                   "sps codec: avc header "
                    "profile=%ui, compat=%ui, level=%ui, "
                    "nal_bytes=%ui, ref_frames=%ui, width=%ui, height=%ui",
                    ctx->avc_profile, ctx->avc_compat, ctx->avc_level,
@@ -1299,7 +1299,7 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     ngx_memcpy(ctx->profile, v.profile, sizeof(v.profile));
     ngx_memcpy(ctx->level, v.level, sizeof(v.level));
 
-    ngx_log_debug8(NGX_LOG_DEBUG_RTMP, s->log, 0,
+    ngx_log_error(NGX_LOG_INFO, s->log, 0,
             "codec: data frame: "
             "width=%ui height=%ui duration=%ui frame_rate=%f "
             "video=%s (%ui) audio=%s (%ui)",
