@@ -162,7 +162,7 @@ ngx_rtmp_gop_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
 static ngx_int_t
 ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_frame_t *frame)
 {
-    ngx_uint_t                      nmsg;
+ ngx_uint_t                      nmsg;
     ngx_rtmp_live_chunk_stream_t   *cs;
     ngx_uint_t                      csidx;
     ngx_rtmp_live_ctx_t            *lctx;
@@ -210,7 +210,7 @@ ngx_rtmp_gop_link_frame(ngx_rtmp_session_t *s, ngx_rtmp_frame_t *frame)
         }
     }
 
-    nmsg = (s->out_last - s->out_pos) % s->out_queue + 1;
+    nmsg = (s->out_queue + s->out_last - s->out_pos) % s->out_queue + 1;
 
     if (nmsg >= s->out_queue) {
         ngx_log_error(NGX_LOG_ERR, s->log, 0,
@@ -326,7 +326,7 @@ ngx_rtmp_gop_reset_gop(ngx_rtmp_session_t *s, ngx_rtmp_gop_ctx_t *ctx,
         return;
     }
 
-    nmsg = (ctx->gop_last - ctx->gop_pos) % s->out_queue + 2;
+    nmsg = (s->out_queue + ctx->gop_last - ctx->gop_pos) % s->out_queue + 2;
     if (nmsg >= s->out_queue) {
         goto reset;
     }
@@ -427,7 +427,7 @@ ngx_rtmp_gop_cache(ngx_rtmp_session_t *s, ngx_rtmp_frame_t *frame)
         ngx_rtmp_set_ctx(s, ctx, ngx_rtmp_gop_module);
     }
 
-    nmsg = (ctx->gop_last - ctx->gop_pos) % s->out_queue + 1;
+    nmsg = (s->out_queue + ctx->gop_last - ctx->gop_pos) % s->out_queue + 1;
     if (nmsg >= s->out_queue) {
         ngx_log_error(NGX_LOG_ERR, s->log, 0,
                 "cache frame nmsg(%ui) >= out_queue(%z)", nmsg, s->out_queue);
@@ -554,7 +554,7 @@ ngx_rtmp_gop_send_gop(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ss)
 
     pos = ssctx->gop_pos;
     frame = sctx->cache[pos];
-    while (frame) {
+    while (frame && pos != ssctx->gop_last) {
         if (!gacf->send_all &&
             frame->hdr.timestamp - ssctx->first_timestamp >= gacf->cache_time)
         {
@@ -570,7 +570,7 @@ ngx_rtmp_gop_send_gop(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ss)
         frame = sctx->cache[pos];
     }
 
-    if (frame == NULL) { /* send all frame in cache */
+    if (frame == NULL || pos == ssctx->gop_last) { /* send all frame in cache */
         ssctx->send_gop = 3;
     }
 
@@ -621,9 +621,7 @@ ngx_rtmp_gop_send(ngx_rtmp_session_t *s, ngx_rtmp_session_t *ss)
     if (sctx->cache[pos]->keyframe && !sctx->cache[pos]->av_header) {
         if (gacf->low_latency && pos != ssctx->gop_pos) {
             ssctx->gop_pos = pos;
-
             ss->out_pos = ss->out_last;
-
             ngx_log_error(NGX_LOG_INFO, ss->log, 0,
                     "gop, low latency, chase to new keyframe");
 

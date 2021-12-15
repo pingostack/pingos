@@ -190,7 +190,7 @@ ngx_mpegts_gop_link_frame(ngx_rtmp_session_t *s, ngx_mpegts_frame_t *frame)
         return NGX_OK;
     }
 
-    nmsg = (s->out_last - s->out_pos) % s->out_queue + 1;
+    nmsg = (s->out_queue + s->out_last - s->out_pos) % s->out_queue + 1;
 
     if (nmsg >= s->out_queue) {
         ngx_log_error(NGX_LOG_ERR, s->log, 0,
@@ -254,7 +254,7 @@ ngx_mpegts_gop_reset_gop(ngx_rtmp_session_t *s, ngx_mpegts_gop_ctx_t *ctx,
         return;
     }
 
-    nmsg = (ctx->gop_last - ctx->gop_pos) % s->out_queue + 2;
+    nmsg = (s->out_queue + ctx->gop_last - ctx->gop_pos) % s->out_queue + 2;
     if (nmsg >= s->out_queue) {
         goto reset;
     }
@@ -346,7 +346,7 @@ ngx_mpegts_gop_cache(ngx_rtmp_session_t *s, ngx_mpegts_frame_t *frame)
         ngx_rtmp_set_ctx(s, ctx, ngx_mpegts_gop_module);
     }
 
-    nmsg = (ctx->gop_last - ctx->gop_pos) % s->out_queue + 1;
+    nmsg = (s->out_queue + ctx->gop_last - ctx->gop_pos) % s->out_queue + 1;
     if (nmsg >= s->out_queue) {
         ngx_log_error(NGX_LOG_ERR, s->log, 0,
                 "cache frame nmsg(%ui) >= out_queue(%z)", nmsg, s->out_queue);

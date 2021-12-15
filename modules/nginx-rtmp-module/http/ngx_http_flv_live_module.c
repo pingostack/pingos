@@ -9,6 +9,7 @@
 #include <ngx_http.h>
 #include "ngx_rtmp.h"
 #include "ngx_rtmp_cmd_module.h"
+#include "ngx_rtmp_codec_module.h"
 #include "ngx_rbuf.h"
 #include "ngx_http_set_header.h"
 #include "ngx_rtmp_monitor_module.h"
@@ -105,6 +106,24 @@ ngx_http_flv_live_send_header(ngx_http_request_t *r)
     ngx_buf_t                          *b;
     ngx_chain_t                         out;
     ngx_http_flv_live_loc_conf_t       *hflcf;
+    ngx_flag_t                          has_video;
+    ngx_flag_t                          has_audio;
+    ngx_http_flv_live_ctx_t            *ctx;
+    ngx_rtmp_session_t                 *s;
+
+    ctx = ngx_http_get_module_ctx(r, ngx_http_flv_live_module);
+    s = ctx->session;
+    if (s && s->live_stream->bw_in_audio.bytes) {
+        has_audio = 1;
+    } else {
+        has_audio = 0;
+    }
+
+    if (s && s->live_stream->bw_in_video.bytes) {
+        has_video = 1;
+    } else {
+        has_video = 0;
+    }
 
     if (r->header_sent) {
         return NGX_OK;
@@ -145,10 +164,34 @@ ngx_http_flv_live_send_header(ngx_http_request_t *r)
         break;
 
         default:
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "flv-live: send_header| av header config error.");
 
-            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            if (has_audio && has_video) {
+                b->start = b->pos = ngx_flv_live_av_header;
+                b->end = b->last = ngx_flv_live_av_header +
+                    sizeof(ngx_flv_live_av_header) - 1;
+                ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
+                        "broth video and audio, url: %V", &r->uri);
+            } else if (!has_video && has_audio) {
+                b->start = b->pos = ngx_flv_live_audio_header;
+                b->end = b->last = ngx_flv_live_audio_header +
+                    sizeof(ngx_flv_live_audio_header) - 1;
+                ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
+                        "only audio, url: %V", &r->uri);
+            } else if (has_video && !has_audio) {
+                b->start = b->pos = ngx_flv_live_video_header;
+                b->end = b->last = ngx_flv_live_video_header +
+                    sizeof(ngx_flv_live_video_header) - 1;
+                ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
+                        "only video, url: %V", &r->uri);
+            } else {
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                        "miss video and audio headers, url: %V", &r->uri);
+                return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            }
+            // ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+            //     "flv-live: send_header| av header config error.");
+
+//            return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
     b->memory = 1;
