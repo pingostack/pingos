@@ -21,8 +21,8 @@ static void *ngx_http_flv_live_create_loc_conf(ngx_conf_t *cf);
 static char *ngx_http_flv_live_merge_loc_conf(ngx_conf_t *cf, void *parent,
        void *child);
 
-static u_char  ngx_flv_live_audio_header[] = "FLV\x1\x1\0\0\0\x9\0\0\0\0";
-static u_char  ngx_flv_live_video_header[] = "FLV\x1\x4\0\0\0\x9\0\0\0\0";
+static u_char  ngx_flv_live_audio_header[] = "FLV\x1\x4\0\0\0\x9\0\0\0\0";
+static u_char  ngx_flv_live_video_header[] = "FLV\x1\x1\0\0\0\x9\0\0\0\0";
 static u_char  ngx_flv_live_av_header[] = "FLV\x1\x5\0\0\0\x9\0\0\0\0";
 
 static ngx_keyval_t ngx_http_flv_live_headers[] = {

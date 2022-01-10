@@ -1476,7 +1476,7 @@ ngx_rtmp_codec_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_codec_app_conf_t *prev = parent;
     ngx_rtmp_codec_app_conf_t *conf = child;
 
-    ngx_conf_merge_uint_value(conf->meta, prev->meta, NGX_RTMP_CODEC_META_ON);
+    ngx_conf_merge_uint_value(conf->meta, prev->meta, NGX_RTMP_CODEC_META_COPY);
 
     return NGX_CONF_OK;
 }

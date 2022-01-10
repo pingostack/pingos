@@ -2083,7 +2083,11 @@ ngx_rtmp_notify_push_close(ngx_rtmp_session_t *s)
     ngx_rtmp_notify_ctx_t        *octx;
 
     ctx = ngx_rtmp_get_module_ctx(s, ngx_live_relay_module);
-    if (ctx->tag != &ngx_rtmp_notify_module) {
+    if (ctx->tag != &ngx_rtmp_notify_module ||
+        (s->live_stream->publish_ctx &&
+        s->live_stream->publish_ctx->session->relay &&
+        s->live_stream->publish_ctx->session->static_pull == 0))
+    {
         goto next;
     }
 

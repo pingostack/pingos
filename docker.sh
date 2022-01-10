@@ -1,0 +1,1 @@
+docker image build --target prod -t livhub/pingos:latest -f docker/Dockerfile .
