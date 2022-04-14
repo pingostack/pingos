@@ -1192,16 +1192,16 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
           &v.video_codec_id_s, sizeof(v.video_codec_id_s) },
     };
 
-    static ngx_rtmp_amf_elt_t       in_audio_codec_id[] = {
+    // static ngx_rtmp_amf_elt_t       in_audio_codec_id[] = {
 
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_null_string,
-          &v.audio_codec_id_n, 0 },
+    //     { NGX_RTMP_AMF_NUMBER,
+    //       ngx_null_string,
+    //       &v.audio_codec_id_n, 0 },
 
-        { NGX_RTMP_AMF_STRING,
-          ngx_null_string,
-          &v.audio_codec_id_s, sizeof(v.audio_codec_id_s) },
-    };
+    //     { NGX_RTMP_AMF_STRING,
+    //       ngx_null_string,
+    //       &v.audio_codec_id_s, sizeof(v.audio_codec_id_s) },
+    // };
 
     static ngx_rtmp_amf_elt_t       in_inf[] = {
 
@@ -1233,21 +1233,21 @@ ngx_rtmp_codec_meta_data(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
           ngx_string("videocodecid"),
           in_video_codec_id, sizeof(in_video_codec_id) },
 
-        { NGX_RTMP_AMF_NUMBER,
-          ngx_string("audiodatarate"),
-          &v.audio_data_rate, 0 },
+        // { NGX_RTMP_AMF_NUMBER,
+        //   ngx_string("audiodatarate"),
+        //   &v.audio_data_rate, 0 },
 
-        { NGX_RTMP_AMF_VARIANT,
-          ngx_string("audiocodecid"),
-          in_audio_codec_id, sizeof(in_audio_codec_id) },
+        // { NGX_RTMP_AMF_VARIANT,
+        //   ngx_string("audiocodecid"),
+        //   in_audio_codec_id, sizeof(in_audio_codec_id) },
 
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("profile"),
-          &v.profile, sizeof(v.profile) },
+        // { NGX_RTMP_AMF_STRING,
+        //   ngx_string("profile"),
+        //   &v.profile, sizeof(v.profile) },
 
-        { NGX_RTMP_AMF_STRING,
-          ngx_string("level"),
-          &v.level, sizeof(v.level) },
+        // { NGX_RTMP_AMF_STRING,
+        //   ngx_string("level"),
+        //   &v.level, sizeof(v.level) },
     };
 
     static ngx_rtmp_amf_elt_t       in_elts[] = {
@@ -1476,7 +1476,7 @@ ngx_rtmp_codec_merge_app_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_rtmp_codec_app_conf_t *prev = parent;
     ngx_rtmp_codec_app_conf_t *conf = child;
 
-    ngx_conf_merge_uint_value(conf->meta, prev->meta, NGX_RTMP_CODEC_META_COPY);
+    ngx_conf_merge_uint_value(conf->meta, prev->meta, NGX_RTMP_CODEC_META_ON);
 
     return NGX_CONF_OK;
 }

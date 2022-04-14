@@ -250,10 +250,11 @@ ngx_http_broadcast_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
             return NGX_OK;
         }
 
-        b = in->buf;
-        if (!in || !b || b->last == b->pos) {
+        if (!in || !in->buf || in->buf->last == in->buf->pos) {
             return ngx_http_next_body_filter(r, in);
         }
+
+        b = in->buf;
 
         if (ctx->has_rewrite == 0 &&
             hbcf->prefix.len > 0 &&
