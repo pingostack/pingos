@@ -718,7 +718,7 @@ ngx_client_connect_server(void *data, struct sockaddr *sa, socklen_t socklen)
 
     ngx_inet_set_port(sa, s->port);
 
-    s->peer.sockaddr = ngx_pcalloc(s->pool, sizeof(socklen));
+    s->peer.sockaddr = ngx_pcalloc(s->pool, socklen);
     ngx_memcpy(s->peer.sockaddr, sa, socklen);
     s->peer.socklen = socklen;
     s->peer.name = &s->server;
