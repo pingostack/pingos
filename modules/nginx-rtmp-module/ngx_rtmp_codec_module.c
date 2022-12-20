@@ -102,7 +102,8 @@ static ngx_rtmp_variable_t  ngx_rtmp_codec_variabes[] = {
     { ngx_string("metadata"), NULL, ngx_rtmp_codec_variable_metadata,
       0, NGX_RTMP_VAR_NOCACHEABLE|NGX_RTMP_VAR_PREFIX, 0 },
     { ngx_string("metadata_"), NULL, ngx_rtmp_codec_variable_metadata_arg,
-      0, NGX_RTMP_VAR_NOCACHEABLE|NGX_RTMP_VAR_PREFIX, 0 }
+      0, NGX_RTMP_VAR_NOCACHEABLE|NGX_RTMP_VAR_PREFIX, 0 },
+    { ngx_null_string, NULL, NULL, 0, 0, 0 }
 };
 
 static const char *
